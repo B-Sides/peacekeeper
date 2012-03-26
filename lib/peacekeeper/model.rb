@@ -1,10 +1,8 @@
 module Peacekeeper
   module ModelDelegation
     def method_missing(mid, *args, &block)
-      super if delegate.nil?
-
-      if delegate.respond_to?(mid)
-        define_wrapped_singleton_method(mid, &delegate.method(mid).to_proc)
+      if !delegate.nil? && delegate.respond_to?(mid)
+        define_wrapped_singleton_method(mid, delegate.method(mid).to_proc)
         __send__(mid, *args, &block)
       else
         super
@@ -31,9 +29,9 @@ module Peacekeeper
       end
     end
 
-    def define_wrapped_singleton_method(mid)
+    def define_wrapped_singleton_method(mid, mblock)
       define_singleton_method(mid) do |*args, &block|
-        wrap(yield)
+        wrap(mblock.call(*args, &block))
       end
     end
   end

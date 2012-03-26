@@ -152,6 +152,7 @@ describe Peacekeeper::Model do
     it 'delegates class methods with an argument' do
       my_test_model = MyTestModel.create name: 'Another Test'
       my_test_model.should.be.kind_of MyTestModel
+      MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
   end
 end
