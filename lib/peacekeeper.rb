@@ -1,5 +1,5 @@
-require "peacekeeper/version"
+require 'peacekeeper/version'
+require 'peacekeeper/model'
 
 module Peacekeeper
-  # Your code goes here...
 end

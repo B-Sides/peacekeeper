@@ -1,4 +1,10 @@
-source "http://rubygems.org"
+source :rubygems
 
-# Specify your gem's dependencies in peacekeeper.gemspec
 gemspec
+
+group :development do
+  gem 'pry'
+  gem 'guard'
+  gem 'guard-bacon'
+  gem 'growl'
+end
