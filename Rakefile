@@ -20,6 +20,7 @@ namespace :bump do
     end
 
     def on_tstring_content(str)
+      return super unless @ver
       md = VER_REGEX.match(str)
       raise "Bad version string format: #{str}" unless md
       @major = md[:major]
