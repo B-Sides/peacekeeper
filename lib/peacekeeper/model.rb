@@ -20,6 +20,8 @@ module Peacekeeper
 
     def wrap(val)
       case val
+      when Hash
+        Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
       when Enumerable
         val.map { |i| wrap(i) }
       when delegate

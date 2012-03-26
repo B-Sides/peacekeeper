@@ -138,15 +138,20 @@ describe Peacekeeper::Model do
       end
     end
 
-    it 'wraps a data object return in a model object' do
+    it 'wraps a data object return value in a model object' do
       res = MyTestModel.first
       res.should.be.kind_of MyTestModel
     end
 
-    it 'wraps a collection of data object returns in model objects' do
+    it 'wraps a collection of data object return values in model objects' do
       res = MyTestModel.all
       res.should.be.kind_of Array
       res.each { |i| i.should.be.kind_of MyTestModel }
+    end
+
+    it 'maps a hash return value to a hash' do
+      res = MyTestModel.new.associations
+      res.should.be.kind_of Hash
     end
 
     it 'delegates class methods with an argument' do
