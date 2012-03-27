@@ -24,8 +24,10 @@ module Peacekeeper
         Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
       when Enumerable
         val.map { |i| wrap(i) }
-      when delegate
+      when (self.kind_of?(Class) ? delegate : false)
         new(val)
+      when delegate.class
+        self.class.new(val)
       else
         val
       end

@@ -113,9 +113,12 @@ describe Peacekeeper::Model do
     DB.drop_table(*DB.tables)
     DB.create_table :my_tests do
       primary_key :id
+      foreign_key :other_id, :my_tests
       String :name
     end
-    DB[:my_tests].insert(name: 'A Test')
+    DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
+    DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
+    DB[:my_tests].filter(id: 1).update(other_id: 2)
 
     it 'delegates data class methods to the data class' do
       (MyTestModel.respond_to?(:table_name)).should.be.true
@@ -130,11 +133,16 @@ describe Peacekeeper::Model do
       end
 
       it 'delegates data methods to the data object' do
-        my_test_model.columns.should.equal [:id, :name]
+        my_test_model.columns.should.equal [:id, :other_id, :name]
       end
 
       it 'still has access to methods defined on the model' do
         my_test_model.test.should.be.equal :ok
+      end
+
+      it 'wraps delegated methods that return data class instances' do
+        a_test = MyTestModel.filter(name: 'Other').first
+        a_test.other.should.be.kind_of? MyTestModel
       end
     end
 
