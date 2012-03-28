@@ -1,5 +1,11 @@
 module Peacekeeper
   module ModelDelegation
+    class Pass
+      def self.===(o)
+        false
+      end
+    end
+
     def method_missing(mid, *args, &block)
       if !delegate.nil? && delegate.respond_to?(mid)
         define_wrapped_singleton_method(mid, delegate.method(mid).to_proc)
@@ -24,7 +30,7 @@ module Peacekeeper
         Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
       when Enumerable
         val.map { |i| wrap(i) }
-      when (self.kind_of?(Class) ? delegate : false)
+      when (self.kind_of?(Class) ? delegate : Pass)
         new(val)
       when delegate.class
         self.class.new(val)
