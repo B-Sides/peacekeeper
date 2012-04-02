@@ -63,12 +63,15 @@ describe Peacekeeper::Model do
     end
 
     describe 'set to Sequel' do
+      before do
+        Peacekeeper::Model.orm = nil
+      end
+
       it 'requires the Sequel library' do
         -> { Peacekeeper::Model.orm = :sequel }.should require_lib('sequel')
       end
 
       it 'loads the Data object for subclasses created before' do
-        Peacekeeper::Model.orm = nil
         class BeforeModel < Peacekeeper::Model; end
         Peacekeeper::Model.orm = :sequel
         lambda do
@@ -77,7 +80,6 @@ describe Peacekeeper::Model do
       end
 
       it 'loads the Data object for subclasses created after' do
-        Peacekeeper::Model.orm = nil
         Peacekeeper::Model.orm = :sequel
         class AfterModel < Peacekeeper::Model; end
         lambda do
@@ -86,13 +88,21 @@ describe Peacekeeper::Model do
       end
 
       it 'propogates the ORM setting to subclasses' do
-        Peacekeeper::Model.orm = nil
         class BeforeSettingModel < Peacekeeper::Model; end
         Peacekeeper::Model.orm = :sequel
         class AfterSettingModel < Peacekeeper::Model; end
 
         BeforeSettingModel.orm.should.equal :sequel
         AfterSettingModel.orm.should.equal :sequel
+      end
+
+      it 'should only connect to the Database once' do
+        class BeforeModel < Peacekeeper::Model; end
+        class BeforeSettingModel < Peacekeeper::Model; end
+        Peacekeeper::Model.orm = :sequel
+        class AfterModel < Peacekeeper::Model; end
+        class AfterSettingModel < Peacekeeper::Model; end
+        Sequel::DATABASES.length.should.equal 1
       end
     end
   end

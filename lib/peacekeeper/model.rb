@@ -79,7 +79,7 @@ module Peacekeeper
         when :sequel
           @orm = orm_lib
           require 'sequel'
-          Sequel::Model.db = Sequel.connect(sequel_db_url)
+          Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
         end
         subclasses.each do |sub|
           sub.orm = @orm
@@ -111,7 +111,7 @@ module Peacekeeper
         self.orm = parent.orm
       end
 
-      def sequel_db_url
+      def sequel_db_uri
         protocol = config['protocol'] || config['adapter'] || 'sqlite'
         user_pass = "#{config['username']}:#{config['password']}@"
         user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
