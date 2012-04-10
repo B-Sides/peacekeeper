@@ -34,6 +34,8 @@ module Peacekeeper
         new(val)
       when delegate.class
         self.class.new(val)
+      when *(data_classes = Model.subclasses.each_with_object({}) { |e, h| h[e.data_class] = e }).keys
+        data_classes[val.class].new(val)
       else
         val
       end
@@ -63,7 +65,7 @@ module Peacekeeper
         super
       end
 
-      def subclasses; (@subclasses ||=[]); end
+      def subclasses; (@subclasses ||= []); end
 
       def config; (@config ||= {}); end
       def config=(new_config)

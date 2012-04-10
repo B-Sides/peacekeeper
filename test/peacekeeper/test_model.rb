@@ -55,7 +55,7 @@ describe Peacekeeper::Model do
   end
 
   describe 'manages an ORM selection' do
-    # Implementation deatil...
+    # Implementation deatail...
     Peacekeeper::Model.instance_variable_set(:@subclasses, [])
 
     it 'is nil by default' do
@@ -118,6 +118,8 @@ describe Peacekeeper::Model do
       end
     end
 
+    class MySubtestModel < Peacekeeper::Model; end
+
     # Setup the DB and populate with some test data
     DB = Sequel::Model.db
     DB.drop_table(*DB.tables)
@@ -129,6 +131,15 @@ describe Peacekeeper::Model do
     DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
     DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
     DB[:my_tests].filter(id: 1).update(other_id: 2)
+
+    DB.create_table :my_subtests do
+      primary_key :id
+      foreign_key :my_test_id, :my_tests
+      String :name
+    end
+    DB[:my_subtests].insert(id: 1, my_test_id: 1, name: 'First')
+    DB[:my_subtests].insert(id: 2, my_test_id: 1, name: 'Second')
+    MySubtestModel.new # Instantiate to force loading of data class
 
     it 'delegates data class methods to the data class' do
       (MyTestModel.respond_to?(:table_name)).should.be.true
@@ -165,6 +176,13 @@ describe Peacekeeper::Model do
       res = MyTestModel.all
       res.should.be.kind_of Array
       res.each { |i| i.should.be.kind_of MyTestModel }
+    end
+
+    it 'wraps return values from other model objects' do
+      test = MyTestModel.first
+      res = test.my_subtests
+      res.should.be.kind_of Array
+      res.each { |i| i.should.be.kind_of MySubtestModel }
     end
 
     it 'maps a hash return value to a hash' do
