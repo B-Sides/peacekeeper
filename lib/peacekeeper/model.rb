@@ -46,6 +46,12 @@ module Peacekeeper
         wrap(mblock.call(*args, &block))
       end
     end
+
+    def def_data_method(mid, &mblock)
+      define_method(mid) do |*args|
+        wrap(delegate.instance_exec(*args, &mblock))
+      end
+    end
   end
 
   class Model

@@ -195,6 +195,28 @@ describe Peacekeeper::Model do
       my_test_model.should.be.kind_of MyTestModel
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
+
+    it 'can define methods that operate directly on the data class' do
+      class MyTestModel
+        def_data_method :others_first_subtest do
+          other.my_subtests.first
+        end
+      end
+      res = MyTestModel.filter(id: 2).first.others_first_subtest
+      res.should.be.kind_of MySubtestModel
+      res.name.should.equal 'First'
+    end
+
+    it 'can define methods that operate directly on the data class and takes arguments' do
+      class MyTestModel
+        def_data_method :others_nth_subtest do |n|
+          other.my_subtests[n]
+        end
+      end
+      res = MyTestModel.filter(id: 2).first.others_nth_subtest(1)
+      res.should.be.kind_of MySubtestModel
+      res.name.should.equal 'Second'
+    end
   end
 end
 
