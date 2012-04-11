@@ -217,6 +217,17 @@ describe Peacekeeper::Model do
       res.should.be.kind_of MySubtestModel
       res.name.should.equal 'Second'
     end
+
+    it 'can define class methods that operate directly on the data class' do
+      class MyTestModel
+        def_singleton_data_method :first_subtest do
+          first.my_subtests.first
+        end
+      end
+      res = MyTestModel.first_subtest
+      res.should.be.kind_of MySubtestModel
+      res.name.should.equal 'First'
+    end
   end
 end
 

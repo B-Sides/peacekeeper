@@ -52,6 +52,12 @@ module Peacekeeper
         wrap(delegate.instance_exec(*args, &mblock))
       end
     end
+
+    def def_singleton_data_method(mid, &mblock)
+      define_singleton_method(mid) do |*args|
+        wrap(delegate.instance_exec(*args, &mblock))
+      end
+    end
   end
 
   class Model
