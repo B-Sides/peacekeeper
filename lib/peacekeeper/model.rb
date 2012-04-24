@@ -26,18 +26,18 @@ module Peacekeeper
 
     def wrap(val)
       case val
-      when Hash
-        Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
-      when Enumerable
-        val.map { |i| wrap(i) }
-      when (self.kind_of?(Class) ? delegate : Pass)
-        new(val)
-      when delegate.class
-        self.class.new(val)
-      when *(data_classes = Model.subclasses.each_with_object({}) { |e, h| h[e.data_class] = e }).keys
-        data_classes[val.class].new(val)
-      else
-        val
+        when Hash
+          Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
+        when Enumerable
+          val.map { |i| wrap(i) }
+        when (self.kind_of?(Class) ? delegate : Pass)
+          new(val)
+        when delegate.class
+          self.class.new(val)
+        when *(data_classes = Model.subclasses.each_with_object({}) { |e, h| h[e.data_class] = e }).keys
+          data_classes[val.class].new(val)
+        else
+          val
       end
     end
 
@@ -63,7 +63,7 @@ module Peacekeeper
   class Model
     kernel = ::Kernel.dup
     kernel.class_eval do
-      [:to_s,:inspect,:=~,:!~,:===,:<=>,:eql?,:hash].each do |m|
+      [:to_s, :inspect, :=~, :!~, :===, :<=>, :eql?, :hash].each do |m|
         undef_method m
       end
     end
@@ -77,9 +77,14 @@ module Peacekeeper
         super
       end
 
-      def subclasses; (@subclasses ||= []); end
+      def subclasses;
+        (@subclasses ||= []);
+      end
 
-      def config; (@config ||= {}); end
+      def config;
+        (@config ||= {});
+      end
+
       def config=(new_config)
         @config = new_config
         subclasses.each do |sub|
@@ -87,13 +92,16 @@ module Peacekeeper
         end
       end
 
-      def orm; (@orm ||= nil); end
+      def orm;
+        (@orm ||= nil);
+      end
+
       def orm=(orm_lib)
         case orm_lib
-        when :sequel
-          @orm = orm_lib
-          require 'sequel'
-          Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+          when :sequel
+            @orm = orm_lib
+            require 'sequel'
+            Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
         end
         subclasses.each do |sub|
           sub.orm = @orm
@@ -103,14 +111,15 @@ module Peacekeeper
       def data_class
         return nil if self == Model
         @data_class ||= begin
-                          if orm.nil?
-                            nil
-                          else
-                            require "data/#{orm}/#{data_lib_name}"
-                            Kernel.const_get(data_name)
-                          end
-                        end
+          if orm.nil?
+            nil
+          else
+            require "data/#{orm}/#{data_lib_name}"
+            Kernel.const_get(data_name)
+          end
+        end
       end
+
       alias :delegate :data_class
 
       def inherited(sub)
@@ -125,15 +134,21 @@ module Peacekeeper
         self.orm = parent.orm
       end
 
+      # Construct uri to connect to database  
+      # Sequel: http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html
       def sequel_db_uri
-        protocol = config['protocol'] || config['adapter'] || 'sqlite'
-        user_pass = "#{config['username']}:#{config['password']}@"
-        user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
-        path = "#{config['host'] || config['path']}/#{config['database']}"
-        path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
-        server_path = "#{user_pass}#{path}"
-        server_path = "/#{server_path}" unless server_path.empty?
-        "#{protocol}:/#{server_path}"
+        if config['adapter'] == 'jdbc:mysql'
+          "#{config['adapter']}://#{config['host']}/#{config['database']}?user=#{config['username']}&password=#{config['password']}"
+        else
+          protocol = config['protocol'] || config['adapter'] || 'sqlite'
+          user_pass = "#{config['username']}:#{config['password']}@"
+          user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
+          path = "#{config['host'] || config['path']}/#{config['database']}"
+          path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
+          server_path = "#{user_pass}#{path}"
+          server_path = "/#{server_path}" unless server_path.empty?
+          "#{protocol}:/#{server_path}"
+        end
       end
 
       def data_name
@@ -143,8 +158,8 @@ module Peacekeeper
       def data_lib_name
         name = data_name
         name.gsub!(/::/, '/')
-        name.gsub!(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
-        name.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
+        name.gsub!(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2')
+        name.gsub!(/([a-z\d])([A-Z])/, '\1_\2')
         name.tr!("-", "_")
         name.downcase!
         name

@@ -1,4 +1,6 @@
 *.gem
 .bundle
+.idea
+atlassian-ide-plugin.xml
 Gemfile.lock
 pkg/*

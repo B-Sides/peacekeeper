@@ -55,7 +55,7 @@ describe Peacekeeper::Model do
   end
 
   describe 'manages an ORM selection' do
-    # Implementation deatil...
+    # Implementation detail...
     Peacekeeper::Model.instance_variable_set(:@subclasses, [])
 
     it 'is nil by default' do
@@ -85,7 +85,7 @@ describe Peacekeeper::Model do
         end.should require_lib('data/sequel/test_after')
       end
 
-      it 'propogates the ORM setting to subclasses' do
+      it 'propagates the ORM setting to subclasses' do
         Peacekeeper::Model.orm = nil
         class BeforeSettingModel < Peacekeeper::Model; end
         Peacekeeper::Model.orm = :sequel
