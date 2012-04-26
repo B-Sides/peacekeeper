@@ -7,4 +7,5 @@ group :development do
   gem 'guard'
   gem 'guard-bacon'
   gem 'growl'
+  gem 'facon'
 end

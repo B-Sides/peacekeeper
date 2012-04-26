@@ -7,6 +7,7 @@ require 'peacekeeper/model'
 #
 module RequireMock
   REQUIRE_SENTINEL = []
+
   def require(lib)
     REQUIRE_SENTINEL << lib
     super
@@ -21,15 +22,17 @@ def require_lib(lib)
     REQUIRE_SENTINEL.include?(lib)
   end
 end
+
 #
 ###
 
 describe Peacekeeper::Model do
   it 'cannot be instantiated directly' do
-     -> { Peacekeeper::Model.new }.should.raise(RuntimeError)
+    -> { Peacekeeper::Model.new }.should.raise(RuntimeError)
   end
 
-  class SubclassTestModel < Peacekeeper::Model; end
+  class SubclassTestModel < Peacekeeper::Model;
+  end
 
   it 'derives a model name based on the subclass\'s name' do
     SubclassTestModel.data_name.should.equal 'SubclassTest'
@@ -45,9 +48,11 @@ describe Peacekeeper::Model do
     end
 
     it 'is inherited by subclasses' do
-      class SubclassBeforeModel < Peacekeeper::Model; end
-      Peacekeeper::Model.config = { path: SEQUEL_TEST_DB }
-      class SubclassAfterModel < Peacekeeper::Model; end
+      class SubclassBeforeModel < Peacekeeper::Model;
+      end
+      Peacekeeper::Model.config = {path: SEQUEL_TEST_DB}
+      class SubclassAfterModel < Peacekeeper::Model;
+      end
 
       SubclassBeforeModel.config[:path].should.equal SEQUEL_TEST_DB
       SubclassAfterModel.config[:path].should.equal SEQUEL_TEST_DB
@@ -72,7 +77,8 @@ describe Peacekeeper::Model do
       end
 
       it 'loads the Data object for subclasses created before' do
-        class BeforeModel < Peacekeeper::Model; end
+        class BeforeModel < Peacekeeper::Model;
+        end
         Peacekeeper::Model.orm = :sequel
         lambda do
           BeforeModel.data_class.should.equal Before
@@ -81,29 +87,48 @@ describe Peacekeeper::Model do
 
       it 'loads the Data object for subclasses created after' do
         Peacekeeper::Model.orm = :sequel
-        class AfterModel < Peacekeeper::Model; end
+        class AfterModel < Peacekeeper::Model;
+        end
         lambda do
           AfterModel.data_class.should.equal After
         end.should require_lib('data/sequel/after')
       end
 
       it 'propogates the ORM setting to subclasses' do
-        class BeforeSettingModel < Peacekeeper::Model; end
+        class BeforeSettingModel < Peacekeeper::Model;
+        end
         Peacekeeper::Model.orm = :sequel
-        class AfterSettingModel < Peacekeeper::Model; end
+        class AfterSettingModel < Peacekeeper::Model;
+        end
 
         BeforeSettingModel.orm.should.equal :sequel
         AfterSettingModel.orm.should.equal :sequel
       end
 
       it 'should only connect to the Database once' do
-        class BeforeModel < Peacekeeper::Model; end
-        class BeforeSettingModel < Peacekeeper::Model; end
+        class BeforeModel < Peacekeeper::Model;
+        end
+        class BeforeSettingModel < Peacekeeper::Model;
+        end
         Peacekeeper::Model.orm = :sequel
-        class AfterModel < Peacekeeper::Model; end
-        class AfterSettingModel < Peacekeeper::Model; end
+        class AfterModel < Peacekeeper::Model;
+        end
+        class AfterSettingModel < Peacekeeper::Model;
+        end
         Sequel::DATABASES.length.should.equal 1
       end
+    end                     
+    
+    describe 'set to mock' do
+      before do
+        Peacekeeper::Model.orm = :nil
+        Peacekeeper::Model.config[:mock_library] = 'facon'
+      end
+
+      it 'requires the facon library' do
+        -> { Peacekeeper::Model.orm = :mock}.should require_lib('facon')
+      end
+      
     end
   end
 
@@ -118,7 +143,8 @@ describe Peacekeeper::Model do
       end
     end
 
-    class MySubtestModel < Peacekeeper::Model; end
+    class MySubtestModel < Peacekeeper::Model;
+    end
 
     # Setup the DB and populate with some test data
     DB = Sequel::Model.db

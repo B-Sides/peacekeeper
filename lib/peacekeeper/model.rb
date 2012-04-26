@@ -102,6 +102,9 @@ module Peacekeeper
             @orm = orm_lib
             require 'sequel'
             Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+          when :mock
+            @orm = orm_lib
+            require config[:mock_library] if config[:mock_library]
         end
         subclasses.each do |sub|
           sub.orm = @orm
@@ -113,6 +116,8 @@ module Peacekeeper
         @data_class ||= begin
           if orm.nil?
             nil
+          elsif orm == :mock and self.respond_to? :mock
+            mock data_name
           else
             require "data/#{orm}/#{data_lib_name}"
             Kernel.const_get(data_name)
