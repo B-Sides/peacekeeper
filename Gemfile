@@ -1,4 +1,5 @@
 source :rubygems
+source 'http://tater:tots2000@scripps-gems.elctech.net'
 
 gemspec
 

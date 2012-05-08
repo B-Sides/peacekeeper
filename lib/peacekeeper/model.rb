@@ -97,13 +97,14 @@ module Peacekeeper
       end
 
       def orm=(orm_lib)
+        @orm = orm_lib
         case orm_lib
           when :sequel
-            @orm = orm_lib
             require 'sequel'
             Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+          when :api
+            require 'nasreddin'
           when :mock
-            @orm = orm_lib
             require config[:mock_library] if config[:mock_library]
         end
         subclasses.each do |sub|
