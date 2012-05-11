@@ -98,6 +98,7 @@ module Peacekeeper
 
       def orm=(orm_lib)
         @orm = orm_lib
+        @data_class = nil
         case orm_lib
           when :sequel
             require 'sequel'
@@ -125,7 +126,6 @@ module Peacekeeper
           end
         end
       end
-
       alias :delegate :data_class
 
       def inherited(sub)
