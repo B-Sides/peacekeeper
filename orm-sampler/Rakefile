@@ -1,0 +1,8 @@
+require 'rake'
+require 'pry'
+
+desc "Connect to the SQLite DB for each ORM sample"
+task :connect => ["ar:connect", "dm:connect", "sequel:connect"]
+
+desc "Migrate each ORM"
+task :migrate => ["ar:migrate", "dm:migrate", "sequel:migrate"]

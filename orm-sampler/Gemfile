@@ -1,0 +1,14 @@
+source :rubygems
+source 'http://tater:tots2000@scripps-gems.elctech.net'
+
+gem 'activerecord'
+gem 'data_mapper'
+gem 'dm-sqlite-adapter'
+gem 'sequel'
+gem 'peacekeeper'
+gem 'sqlite3'
+gem 'bacon'
+gem 'pry'
+gem 'guard'
+gem 'guard-bacon', github: 'jballanc/guard-bacon'
+gem 'growl'
