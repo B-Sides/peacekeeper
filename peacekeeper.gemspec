@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'sequel', '~> 3.33.0'
   s.add_runtime_dependency 'nasreddin', '~> 0.0.1'
-  s.add_development_dependency 'sqlite3', '~> 1.3.5'
+  s.add_development_dependency 'jdbc-sqlite3', '~> 3.6.14'
   s.add_development_dependency 'bacon', '~> 1.1.0'
+  s.add_development_dependency 'facon', '~> 0.5.0'
 end

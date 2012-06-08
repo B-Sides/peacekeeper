@@ -117,8 +117,8 @@ describe Peacekeeper::Model do
         end
         Sequel::DATABASES.length.should.equal 1
       end
-    end                     
-    
+    end
+
     describe 'set to mock' do
       before do
         Peacekeeper::Model.orm = :nil
@@ -128,7 +128,6 @@ describe Peacekeeper::Model do
       it 'requires the facon library' do
         -> { Peacekeeper::Model.orm = :mock}.should require_lib('facon')
       end
-      
     end
   end
 
@@ -256,32 +255,33 @@ describe Peacekeeper::Model do
     end
   end
 
-  describe 'database connection uri' do
-    username = Peacekeeper::Model.config['username'] = 'username'
-    password = Peacekeeper::Model.config['password'] = 'password'
-    host = Peacekeeper::Model.config['host'] = 'localhost'
-    database = Peacekeeper::Model.config['database'] = 'database'
+  # These are too close to testing the implementation with the implementation
+  #describe 'database connection uri' do
+  #  username = Peacekeeper::Model.config['username'] = 'username'
+  #  password = Peacekeeper::Model.config['password'] = 'password'
+  #  host = Peacekeeper::Model.config['host'] = 'localhost'
+  #  database = Peacekeeper::Model.config['database'] = 'database'
 
-    describe "when specified adapter is 'jdbc:mysql'" do
-      it 'generate uri for jdbc:mysql' do
-        adapter = Peacekeeper::Model.config['adapter'] = 'jdbc:mysql'
-        Peacekeeper::Model.sequel_db_uri.should.eql "#{adapter}://#{host}/#{database}?user=#{username}&password=#{password}"
-      end
-    end
+  #  describe "when specified adapter is 'jdbc:mysql'" do
+  #    it 'generate uri for jdbc:mysql' do
+  #      adapter = Peacekeeper::Model.config['adapter'] = 'jdbc:mysql'
+  #      Peacekeeper::Model.sequel_db_uri.should.eql "#{adapter}://#{host}/#{database}?user=#{username}&password=#{password}"
+  #    end
+  #  end
 
-    describe "when specified adapter is not 'jdbc:mysql'" do
-      it 'generate non-jdbc uri' do
-        adapter = Peacekeeper::Model.config['adapter'] = 'mysql2'
-        Peacekeeper::Model.sequel_db_uri.should.eql "#{adapter}://#{username}:#{password}@#{host}/#{database}"
-      end
-    end
+  #  describe "when specified adapter is not 'jdbc:mysql'" do
+  #    it 'generate non-jdbc uri' do
+  #      adapter = Peacekeeper::Model.config['adapter'] = 'mysql2'
+  #      Peacekeeper::Model.sequel_db_uri.should.eql "#{adapter}://#{username}:#{password}@#{host}/#{database}"
+  #    end
+  #  end
 
-    describe "when no adapter is specified" do
-      it 'generate sqlite uri' do
-        Peacekeeper::Model.config = {}
-        Peacekeeper::Model.sequel_db_uri.should.eql 'sqlite:/'
-      end
-    end
-  end
+  #  describe "when no adapter is specified" do
+  #    it 'generate sqlite uri' do
+  #      Peacekeeper::Model.config = {}
+  #      Peacekeeper::Model.sequel_db_uri.should.eql 'sqlite:/'
+  #    end
+  #  end
+  #end
 end
 

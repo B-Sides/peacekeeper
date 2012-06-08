@@ -77,13 +77,9 @@ module Peacekeeper
         super
       end
 
-      def subclasses;
-        (@subclasses ||= []);
-      end
+      def subclasses; (@subclasses ||= []); end
 
-      def config;
-        (@config ||= {});
-      end
+      def config; (@config ||= {}); end
 
       def config=(new_config)
         @config = new_config
@@ -92,9 +88,7 @@ module Peacekeeper
         end
       end
 
-      def orm;
-        (@orm ||= nil);
-      end
+      def orm; (@orm ||= nil); end
 
       def orm=(orm_lib)
         @orm = orm_lib
@@ -140,21 +134,22 @@ module Peacekeeper
         self.orm = parent.orm
       end
 
-      # Construct uri to connect to database  
+      # Construct uri to connect to database
       # Sequel: http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html
       def sequel_db_uri
-        if config['adapter'] == 'jdbc:mysql'
-          "#{config['adapter']}://#{config['host']}/#{config['database']}?user=#{config['username']}&password=#{config['password']}"
-        else
-          protocol = config['protocol'] || config['adapter'] || 'sqlite'
-          user_pass = "#{config['username']}:#{config['password']}@"
-          user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
-          path = "#{config['host'] || config['path']}/#{config['database']}"
-          path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
-          server_path = "#{user_pass}#{path}"
-          server_path = "/#{server_path}" unless server_path.empty?
-          "#{protocol}:/#{server_path}"
+        protocol = config['protocol'] || config['adapter'] || 'sqlite'
+        if RUBY_ENGINE == 'jruby'
+          protocol = "jdbc:#{protocol}" unless protocol.start_with? "jdbc:"
         end
+        user_pass = "#{config['username']}:#{config['password']}@"
+        user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
+        path = "#{config['host'] || config['path']}/#{config['database']}"
+        path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
+        server_path = "#{user_pass}#{path}"
+        server_path = "/#{server_path}" unless server_path.empty?
+        uri = "#{protocol}:/#{server_path}"
+        uri = 'jdbc:sqlite::memory:' if uri == 'jdbc:sqlite:/' && RUBY_ENGINE == 'jruby'
+        uri
       end
 
       def data_name
