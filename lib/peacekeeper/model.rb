@@ -8,7 +8,14 @@ module Peacekeeper
 
     def method_missing(mid, *args, &block)
       if !delegate.nil? && delegate.respond_to?(mid)
-        define_wrapped_singleton_method(mid, delegate.method(mid).to_proc)
+        mblock = begin
+                   delegate.method(mid).to_proc
+                 rescue NameError
+                   proc do |*args, &block|
+                     delegate.send(mid, *args, &block)
+                   end
+                 end
+        define_wrapped_singleton_method(mid, mblock)
         __send__(mid, *args, &block)
       else
         super
@@ -94,17 +101,21 @@ module Peacekeeper
         @orm = orm_lib
         @data_class = nil
         case orm_lib
-          when :sequel
-            require 'sequel'
-            Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
-          when :api
-            require 'nasreddin'
-          when :mock
-            require config[:mock_library] if config[:mock_library]
+        when :sequel
+          require 'sequel'
+          Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+        when :api
+          require 'nasreddin'
+        when :mock
+          require config[:mock_library] if config[:mock_library]
+          data_class # Trigger mock data_class creation
         end
+
         subclasses.each do |sub|
           sub.orm = @orm
         end
+
+        @orm
       end
 
       def data_class
@@ -112,8 +123,15 @@ module Peacekeeper
         @data_class ||= begin
           if orm.nil?
             nil
-          elsif orm == :mock and self.respond_to? :mock
-            mock data_name
+          elsif orm == :mock
+            Kernel.const_set(data_name, Class.new do
+                                          def self.method_missing(*)
+                                            mock(self.name.gsub(/^.*:/, ''))
+                                          end
+                                          def self.respond_to?(*)
+                                            true
+                                          end
+                                        end)
           else
             require "data/#{orm}/#{data_lib_name}"
             Kernel.const_get(data_name)
