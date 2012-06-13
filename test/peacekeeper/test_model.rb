@@ -31,8 +31,7 @@ describe Peacekeeper::Model do
     -> { Peacekeeper::Model.new }.should.raise(RuntimeError)
   end
 
-  class SubclassTestModel < Peacekeeper::Model;
-  end
+  class SubclassTestModel < Peacekeeper::Model; end
 
   it 'derives a model name based on the subclass\'s name' do
     SubclassTestModel.data_name.should.equal 'SubclassTest'
@@ -120,14 +119,31 @@ describe Peacekeeper::Model do
     end
 
     describe 'set to mock' do
-      before do
-        Peacekeeper::Model.orm = :nil
-        Peacekeeper::Model.config[:mock_library] = 'facon'
-      end
+      Peacekeeper::Model.orm = :nil
+      Peacekeeper::Model.config[:mock_library] = 'facon'
 
       it 'requires the facon library' do
         -> { Peacekeeper::Model.orm = :mock}.should require_lib('facon')
       end
+
+      it 'creates a data class ready for mocking' do
+        class MyMockModel < Peacekeeper::Model; end
+        defined?(MyMock).should.equal 'constant'
+        MyMock.should.receive(:delegate_call)
+        MyMockModel.delegate_call
+      end
+
+      it 'returns empty mocks for data class calls by default' do
+        class MyMockableModel < Peacekeeper::Model; end
+
+        foo = MyMockableModel.get_foo
+
+        foo.name.should.equal 'MyMockable'
+        foo.should.be.kind_of Facon::Mock
+      end
+
+      # Implementation deatail...
+      Peacekeeper::Model.instance_variable_set(:@subclasses, [])
     end
   end
 
@@ -142,8 +158,7 @@ describe Peacekeeper::Model do
       end
     end
 
-    class MySubtestModel < Peacekeeper::Model;
-    end
+    class MySubtestModel < Peacekeeper::Model; end
 
     # Setup the DB and populate with some test data
     DB = Sequel::Model.db
@@ -188,7 +203,7 @@ describe Peacekeeper::Model do
 
       it 'wraps delegated methods that return data class instances' do
         a_test = MyTestModel.filter(name: 'Other').first
-        a_test.other.should.be.kind_of? MyTestModel
+        a_test.other.should.be.kind_of MyTestModel
       end
     end
 
@@ -255,7 +270,9 @@ describe Peacekeeper::Model do
     end
   end
 
-  # These are too close to testing the implementation with the implementation
+  # These are too close to testing the implementation with the implementation.
+  # We should probably either test URL construction indirectly or using mocks.
+  # TODO: Implement a test for config['options'] as well.
   #describe 'database connection uri' do
   #  username = Peacekeeper::Model.config['username'] = 'username'
   #  password = Peacekeeper::Model.config['password'] = 'password'

@@ -167,7 +167,15 @@ module Peacekeeper
         server_path = "/#{server_path}" unless server_path.empty?
         uri = "#{protocol}:/#{server_path}"
         uri = 'jdbc:sqlite::memory:' if uri == 'jdbc:sqlite:/' && RUBY_ENGINE == 'jruby'
+        if config['options']
+          uri += paramize(config['options'])
+        end
         uri
+      end
+
+      def paramize(options)
+        params = options.map { |k, v| "#{k}=#{v}" }
+        "?#{params.join('&')}"
       end
 
       def data_name
