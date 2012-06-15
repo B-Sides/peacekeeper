@@ -142,6 +142,16 @@ describe Peacekeeper::Model do
         foo.should.be.kind_of Facon::Mock
       end
 
+      it 'returns a mock with properties set when #new is called with options' do
+        class MyInstantiableMockModel < Peacekeeper::Model; end
+
+        user = MyInstantiableMockModel.new(name: "Joe", position: :employee, vacation_days: 14)
+
+        user.name.should.equal "Joe"
+        user.position.should.equal :employee
+        user.vacation_days.should.equal 14
+      end
+
       # Implementation deatail...
       Peacekeeper::Model.instance_variable_set(:@subclasses, [])
     end

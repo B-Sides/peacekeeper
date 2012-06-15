@@ -125,8 +125,11 @@ module Peacekeeper
             nil
           elsif orm == :mock
             Kernel.const_set(data_name, Class.new do
+                                          def self.new(opts = {})
+                                            mock(self.name.gsub(/^.*:/, ''), opts)
+                                          end
                                           def self.method_missing(*)
-                                            mock(self.name.gsub(/^.*:/, ''))
+                                            self.new
                                           end
                                           def self.respond_to?(*)
                                             true
