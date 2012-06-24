@@ -169,7 +169,7 @@ module Peacekeeper
         path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
 
         # Set the user and password
-        if RUBY_ENGINE == 'jruby' && protocol == 'mysql'
+        if RUBY_ENGINE == 'jruby' && protocol == 'jdbc:mysql'
           # Special case for JRuby and MySQL
           user_pass = "?user=#{config['username']}&password=#{config['password']}"
           server_path = "#{path}#{user_pass}"
