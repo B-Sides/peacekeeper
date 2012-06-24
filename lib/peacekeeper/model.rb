@@ -158,27 +158,44 @@ module Peacekeeper
       # Construct uri to connect to database
       # Sequel: http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html
       def sequel_db_uri
+        # Set the protocol (DB engine; i.e. mysql, sqlite3, postgres, etc.)
         protocol = config['protocol'] || config['adapter'] || 'sqlite'
         if RUBY_ENGINE == 'jruby'
           protocol = "jdbc:#{protocol}" unless protocol.start_with? "jdbc:"
         end
-        user_pass = "#{config['username']}:#{config['password']}@"
-        user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
+
+        # Set the path (hostname & database name)
         path = "#{config['host'] || config['path']}/#{config['database']}"
         path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
-        server_path = "#{user_pass}#{path}"
+
+        # Set the user and password
+        if RUBY_ENGINE == 'jruby' && protocol == 'mysql'
+          # Special case for JRuby and MySQL
+          user_pass = "?user=#{config['username']}&password=#{config['password']}"
+          server_path = "#{path}#{user_pass}"
+        else
+          user_pass = "#{config['username']}:#{config['password']}@"
+          user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
+          server_path = "#{user_pass}#{path}"
+        end
+
+        # Finally, put the protocol and path components together
         server_path = "/#{server_path}" unless server_path.empty?
         uri = "#{protocol}:/#{server_path}"
         uri = 'jdbc:sqlite::memory:' if uri == 'jdbc:sqlite:/' && RUBY_ENGINE == 'jruby'
         if config['options']
-          uri += paramize(config['options'])
+          if uri =~ /\?/
+            uri += "&#{paramize(config['options'])}"
+          else
+            uri += "?#{paramize(config['options'])}"
+          end
         end
         uri
       end
 
       def paramize(options)
         params = options.map { |k, v| "#{k}=#{v}" }
-        "?#{params.join('&')}"
+        "#{params.join('&')}"
       end
 
       def data_name
