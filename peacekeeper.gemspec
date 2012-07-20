@@ -23,4 +23,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'jdbc-sqlite3', '~> 3.6.14'
   s.add_development_dependency 'bacon', '~> 1.1.0'
   s.add_development_dependency 'facon', '~> 0.5.0'
+  s.add_development_dependency 'kramdown', '~> 0.13.7'
+  s.add_development_dependency 'yard', '~> 0.8.2'
 end
