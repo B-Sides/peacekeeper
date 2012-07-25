@@ -58,34 +58,42 @@ describe Peacekeeper::Model do
     end
   end
 
-  describe 'manages an ORM selection' do
+  describe 'manages a data source selection' do
     # Implementation deatail...
     Peacekeeper::Model.instance_variable_set(:@subclasses, [])
 
     it 'is nil by default' do
+      Peacekeeper::Model.data_source.should.be.nil
+
+      # Peacekeeper::Model#orm is depricated
       Peacekeeper::Model.orm.should.be.nil
+    end
+
+    it 'is accessible via the depricated #orm methods' do
+      Peacekeeper::Model.orm = :sequel
+      Peacekeeper::Model.orm.should.equal :sequel
     end
 
     describe 'set to Sequel' do
       before do
-        Peacekeeper::Model.orm = nil
+        Peacekeeper::Model.data_source = nil
       end
 
       it 'requires the Sequel library' do
-        -> { Peacekeeper::Model.orm = :sequel }.should require_lib('sequel')
+        -> { Peacekeeper::Model.data_source = :sequel }.should require_lib('sequel')
       end
 
       it 'loads the Data object for subclasses created before' do
         class BeforeModel < Peacekeeper::Model;
         end
-        Peacekeeper::Model.orm = :sequel
+        Peacekeeper::Model.data_source = :sequel
         lambda do
           BeforeModel.data_class.should.equal Before
         end.should require_lib('data/sequel/before')
       end
 
       it 'loads the Data object for subclasses created after' do
-        Peacekeeper::Model.orm = :sequel
+        Peacekeeper::Model.data_source = :sequel
         class AfterModel < Peacekeeper::Model;
         end
         lambda do
@@ -96,12 +104,12 @@ describe Peacekeeper::Model do
       it 'propogates the ORM setting to subclasses' do
         class BeforeSettingModel < Peacekeeper::Model;
         end
-        Peacekeeper::Model.orm = :sequel
+        Peacekeeper::Model.data_source = :sequel
         class AfterSettingModel < Peacekeeper::Model;
         end
 
-        BeforeSettingModel.orm.should.equal :sequel
-        AfterSettingModel.orm.should.equal :sequel
+        BeforeSettingModel.data_source.should.equal :sequel
+        AfterSettingModel.data_source.should.equal :sequel
       end
 
       it 'should only connect to the Database once' do
@@ -109,7 +117,7 @@ describe Peacekeeper::Model do
         end
         class BeforeSettingModel < Peacekeeper::Model;
         end
-        Peacekeeper::Model.orm = :sequel
+        Peacekeeper::Model.data_source = :sequel
         class AfterModel < Peacekeeper::Model;
         end
         class AfterSettingModel < Peacekeeper::Model;
@@ -119,11 +127,11 @@ describe Peacekeeper::Model do
     end
 
     describe 'set to mock' do
-      Peacekeeper::Model.orm = :nil
+      Peacekeeper::Model.data_source = :nil
       Peacekeeper::Model.config[:mock_library] = 'facon'
 
       it 'requires the facon library' do
-        -> { Peacekeeper::Model.orm = :mock}.should require_lib('facon')
+        -> { Peacekeeper::Model.data_source = :mock}.should require_lib('facon')
       end
 
       it 'creates a data class ready for mocking' do
@@ -160,7 +168,7 @@ describe Peacekeeper::Model do
   describe 'used to create a model subclass with Sequel' do
     # Repeat config here in case these tests are run alone
     Peacekeeper::Model.config[:path] = SEQUEL_TEST_DB
-    Peacekeeper::Model.orm = :sequel
+    Peacekeeper::Model.data_source = :sequel
 
     class MyTestModel < Peacekeeper::Model
       def test
