@@ -95,12 +95,13 @@ module Peacekeeper
         end
       end
 
-      def orm; (@orm ||= nil); end
+      def data_source; (@data_source ||= nil); end
+      alias :orm :data_source # orm is depricated
 
-      def orm=(orm_lib)
-        @orm = orm_lib
+      def data_source=(source)
+        @data_source = source
         @data_class = nil
-        case orm_lib
+        case source
         when :sequel
           require 'sequel'
           Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
@@ -112,18 +113,19 @@ module Peacekeeper
         end
 
         subclasses.each do |sub|
-          sub.orm = @orm
+          sub.data_source = @data_source
         end
 
-        @orm
+        @data_source
       end
+      alias :orm= :data_source= # orm= is depricated
 
       def data_class
         return nil if self == Model
         @data_class ||= begin
-          if orm.nil?
+          if data_source.nil?
             nil
-          elsif orm == :mock
+          elsif data_source == :mock
             Kernel.const_set(data_name, Class.new do
                                           def self.new(opts = {})
                                             mock(self.name.gsub(/^.*:/, ''), opts)
@@ -136,7 +138,7 @@ module Peacekeeper
                                           end
                                         end)
           else
-            require "data/#{orm}/#{data_lib_name}"
+            require "data/#{data_source}/#{data_lib_name}"
             Kernel.const_get(data_name)
           end
         end
@@ -152,7 +154,7 @@ module Peacekeeper
 
       def setup(parent)
         self.config = parent.config
-        self.orm = parent.orm
+        self.data_source = parent.data_source
       end
 
       # Construct uri to connect to database
