@@ -96,6 +96,7 @@ module Peacekeeper
       end
 
       def data_source; (@data_source ||= nil); end
+      alias :orm :data_source # orm is depricated
 
       def data_source=(source)
         @data_source = source
@@ -117,6 +118,7 @@ module Peacekeeper
 
         @data_source
       end
+      alias :orm= :data_source= # orm= is depricated
 
       def data_class
         return nil if self == Model
