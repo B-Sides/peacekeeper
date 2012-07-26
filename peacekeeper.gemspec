@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.add_runtime_dependency 'sequel', '~> 3.33.0'
+  s.add_runtime_dependency 'activerecord', '~> 3.2.6'
+  s.add_runtime_dependency 'activerecord-jdbc-adapter', '~> 1.2.2'
   s.add_runtime_dependency 'nasreddin', '~> 0.0.1'
   s.add_development_dependency 'jdbc-sqlite3', '~> 3.6.14'
   s.add_development_dependency 'bacon', '~> 1.1.0'

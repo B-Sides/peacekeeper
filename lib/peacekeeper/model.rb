@@ -105,6 +105,9 @@ module Peacekeeper
         when :sequel
           require 'sequel'
           Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+        when :active_record
+          require 'active_record'
+          ActiveRecord::Base.establish_connection(active_record_config)
         when :api
           require 'nasreddin'
         when :mock
@@ -193,6 +196,22 @@ module Peacekeeper
           end
         end
         uri
+      end
+
+      def active_record_config
+        # Set the protocol (DB engine; i.e. mysql, sqlite3, postgres, etc.)
+        protocol = config['protocol'] || config['adapter'] || 'sqlite3'
+        if RUBY_ENGINE == 'jruby'
+          protocol = "jdbc"
+        end
+
+        {
+          adapter:  protocol,
+          host:     config["host"],
+          username: config["username"],
+          password: config["password"],
+          database: config["database"]
+        }
       end
 
       def paramize(options)
