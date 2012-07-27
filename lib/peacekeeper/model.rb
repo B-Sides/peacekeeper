@@ -199,19 +199,29 @@ module Peacekeeper
       end
 
       def active_record_config
-        # Set the protocol (DB engine; i.e. mysql, sqlite3, postgres, etc.)
+        # Set the adapter (DB engine; i.e. mysql, sqlite3, postgres, etc.)
         protocol = config['protocol'] || config['adapter'] || 'sqlite3'
         if RUBY_ENGINE == 'jruby'
           protocol = "jdbc"
         end
 
-        {
+        host = config["host"] || 'localhost'
+        port = config["port"] || ''
+        database = config['database']
+        url = "#{sequel_db_uri}//#{host}#{port}/#{database}"
+        ar_config = {
           adapter:  protocol,
-          host:     config["host"],
-          username: config["username"],
-          password: config["password"],
-          database: config["database"]
+          host:     host,
+          database: database
         }
+        ar_config['username'] = config['username'] if config['username']
+        ar_config['password'] = config['password'] if config['password']
+        ar_config['driver'] = config['driver'] if config['driver']
+        ar_config['url'] = url if RUBY_ENGINE == 'jruby'
+        puts '*' * 80
+        puts ar_config
+        puts '*' * 80
+        ar_config
       end
 
       def paramize(options)

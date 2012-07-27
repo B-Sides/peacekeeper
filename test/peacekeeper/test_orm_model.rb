@@ -27,6 +27,10 @@ end
 ###
 
 describe Peacekeeper::Model do
+  Peacekeeper::Model.config[:path] = ACTIVERECORD_TEST_DB
+  Peacekeeper::Model.config[:driver] = 'com.sqlite3.jdbc.Driver'
+  Peacekeeper::Model.config[:database] = 'test_db'
+
   describe 'manages an data source selection' do
     # Implementation deatail...
     Peacekeeper::Model.instance_variable_set(:@subclasses, [])
@@ -91,6 +95,8 @@ describe Peacekeeper::Model do
   describe 'used to create a model subclass with Active Record' do
     # Repeat config here in case these tests are run alone
     Peacekeeper::Model.config[:path] = ACTIVERECORD_TEST_DB
+    Peacekeeper::Model.config[:driver] = 'org.sqlite.JDBC'
+    Peacekeeper::Model.config[:database] = 'test_db'
     Peacekeeper::Model.data_source = :active_record
 
     class MyTestModel < Peacekeeper::Model
