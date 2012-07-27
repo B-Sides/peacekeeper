@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'activerecord', '~> 3.2.6'
   s.add_runtime_dependency 'activerecord-jdbc-adapter', '~> 1.2.2'
   s.add_runtime_dependency 'nasreddin', '~> 0.0.1'
-  s.add_development_dependency 'jdbc-sqlite3', '~> 3.6.14'
+  s.add_development_dependency 'jdbc-sqlite3', '~> 3.7.2'
   s.add_development_dependency 'bacon', '~> 1.1.0'
   s.add_development_dependency 'facon', '~> 0.5.0'
   s.add_development_dependency 'kramdown', '~> 0.13.7'

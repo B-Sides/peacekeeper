@@ -26,10 +26,21 @@ end
 #
 ###
 
+Peacekeeper::Model.config[:database] = 'test_db.sqlite3.db'
+Peacekeeper::Model.config[:adapter] = 'sqlite3'
+Peacekeeper::Model.data_source = :active_record
+
+Peacekeeper::Model.connection.create_table :my_test do |t|
+  t.integer :id
+end
+
+Peacekeeper::Model.connection.create_table :my_subtest do |t|
+  t.integer :id
+  t.integer :other_id
+end
+
+
 describe Peacekeeper::Model do
-  Peacekeeper::Model.config[:path] = ACTIVERECORD_TEST_DB
-  Peacekeeper::Model.config[:driver] = 'com.sqlite3.jdbc.Driver'
-  Peacekeeper::Model.config[:database] = 'test_db'
 
   describe 'manages an data source selection' do
     # Implementation deatail...
@@ -93,12 +104,6 @@ describe Peacekeeper::Model do
   end
 
   describe 'used to create a model subclass with Active Record' do
-    # Repeat config here in case these tests are run alone
-    Peacekeeper::Model.config[:path] = ACTIVERECORD_TEST_DB
-    Peacekeeper::Model.config[:driver] = 'org.sqlite.JDBC'
-    Peacekeeper::Model.config[:database] = 'test_db'
-    Peacekeeper::Model.data_source = :active_record
-
     class MyTestModel < Peacekeeper::Model
       def test
         :ok
@@ -117,7 +122,7 @@ describe Peacekeeper::Model do
 #    end
 #    DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
 #    DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
-#    DB[:my_tests].filter(id: 1).update(other_id: 2)
+#    DB[:my_tests].where(id: 1).update(other_id: 2)
 #
 #    DB.create_table :my_subtests do
 #      primary_key :id
@@ -149,7 +154,7 @@ describe Peacekeeper::Model do
 #      end
 #
 #      it 'wraps delegated methods that return data class instances' do
-#        a_test = MyTestModel.filter(name: 'Other').first
+#        a_test = MyTestModel.where(name: 'Other').first
 #        a_test.other.should.be.kind_of MyTestModel
 #      end
 #    end
@@ -180,7 +185,7 @@ describe Peacekeeper::Model do
     it 'delegates class methods with an argument' do
       my_test_model = MyTestModel.create name: 'Another Test'
       my_test_model.should.be.kind_of MyTestModel
-      MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
+      MyTestModel.where(name: 'Another Test').first.should.equal my_test_model
     end
 
     it 'can define methods that operate directly on the data class' do
@@ -189,7 +194,7 @@ describe Peacekeeper::Model do
           other.my_subtests.first
         end
       end
-      res = MyTestModel.filter(id: 2).first.others_first_subtest
+      res = MyTestModel.where(id: 2).first.others_first_subtest
       res.should.be.kind_of MySubtestModel
       res.name.should.equal 'First'
     end
@@ -200,7 +205,7 @@ describe Peacekeeper::Model do
           other.my_subtests[n]
         end
       end
-      res = MyTestModel.filter(id: 2).first.others_nth_subtest(1)
+      res = MyTestModel.where(id: 2).first.others_nth_subtest(1)
       res.should.be.kind_of MySubtestModel
       res.name.should.equal 'Second'
     end
