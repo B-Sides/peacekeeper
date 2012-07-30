@@ -26,18 +26,12 @@ end
 #
 ###
 
-Peacekeeper::Model.config[:database] = 'test_db.sqlite3.db'
-Peacekeeper::Model.config[:adapter] = 'sqlite3'
-Peacekeeper::Model.data_source = :active_record
-
-Peacekeeper::Model.connection.create_table :my_test do |t|
-  t.integer :id
-end
-
-Peacekeeper::Model.connection.create_table :my_subtest do |t|
-  t.integer :id
-  t.integer :other_id
-end
+#Peacekeeper::Model.config['database'] = 'test.db'
+#Peacekeeper::Model.config['adapter'] = 'sqlite3'
+#Peacekeeper::Model.data_source = :active_record
+#
+#Peacekeeper::Model.connection.execute("CREATE TABLE my_tests (id INTEGER PRIMARY KEY);")
+#Peacekeeper::Model.connection.execute("CREATE TABLE my_subtests (id INTEGER PRIMARY KEY, other_id INTEGER);")
 
 
 describe Peacekeeper::Model do
@@ -102,7 +96,6 @@ describe Peacekeeper::Model do
       #end
     end
   end
-
   describe 'used to create a model subclass with Active Record' do
     class MyTestModel < Peacekeeper::Model
       def test
@@ -112,27 +105,21 @@ describe Peacekeeper::Model do
 
     class MySubtestModel < Peacekeeper::Model; end
 
-#    # Setup the DB and populate with some test data
-#    DB = ActiveRecord::Model.db
-#    DB.drop_table(*DB.tables)
-#    DB.create_table :my_tests do
-#      primary_key :id
-#      foreign_key :other_id, :my_tests
-#      String :name
-#    end
-#    DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
-#    DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
-#    DB[:my_tests].where(id: 1).update(other_id: 2)
-#
-#    DB.create_table :my_subtests do
-#      primary_key :id
-#      foreign_key :my_test_id, :my_tests
-#      String :name
-#    end
-#    DB[:my_subtests].insert(id: 1, my_test_id: 1, name: 'First')
-#    DB[:my_subtests].insert(id: 2, my_test_id: 1, name: 'Second')
-#    MySubtestModel.new # Instantiate to force loading of data class
-#
+    # Setup the DB and populate with some test data
+    Peacekeeper::Model.config['database'] = ACTIVERECORD_TEST_DB
+    Peacekeeper::Model.config['adapter'] = 'sqlite3'
+    Peacekeeper::Model.data_source = :active_record
+
+    ActiveRecord::Base.connection.execute("DROP TABLE my_tests;")
+    ActiveRecord::Base.connection.execute("DROP TABLE my_subtests;")
+    ActiveRecord::Base.connection.execute("CREATE TABLE my_tests (id INTEGER PRIMARY KEY, other_id INTEGER, name STRING);")
+    ActiveRecord::Base.connection.execute("CREATE TABLE my_subtests (id INTEGER PRIMARY KEY, my_test_id INTEGER, name STRING);")
+
+    ActiveRecord::Base.connection.execute("INSERT INTO my_tests (id,other_id,name) VALUES (1, 2, 'A Test');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_tests (id,other_id,name) VALUES (2, 1, 'Other');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (1, 1, 'First');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (2, 1, 'Second');")
+
 #    it 'delegates data class methods to the data class' do
 #      (MyTestModel.respond_to?(:table_name)).should.be.true
 #      MyTestModel.table_name.should.equal :my_tests
