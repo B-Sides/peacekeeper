@@ -32,19 +32,18 @@ module Peacekeeper
     end
 
     def wrap(val)
-      case val
-        when Hash
-          Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
-        when Enumerable
-          val.map { |i| wrap(i) }
-        when (self.kind_of?(Class) ? delegate : Pass)
-          new(val)
-        when delegate.class
-          self.class.new(val)
-        when *(data_classes = Model.subclasses.each_with_object({}) { |e, h| h[e.data_class] = e }).keys
-          data_classes[val.class].new(val)
-        else
-          val
+      if (self.kind_of?(Class) && val.kind_of?(delegate))
+        new(val)
+      elsif (self.kind_of?(Peacekeeper::Model) && val.kind_of?(delegate.class))
+        self.class.new(val)
+      elsif (Peacekeeper::Model.has_wrapper_for?(val.class))
+        Peacekeeper::Model.wrapper_for(val.class).new(val)
+      elsif (val.kind_of?(Hash))
+        Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
+      elsif (val.kind_of?(Enumerable) || val.methods.include?(:each))
+        val.map { |i| wrap(i) }
+      else
+        val
       end
     end
 
@@ -154,6 +153,16 @@ module Peacekeeper
         unless sub.name.nil?
           subclasses << sub
           sub.setup(self)
+        end
+      end
+
+      def has_wrapper_for?(val)
+        !!wrapper_for(val)
+      end
+
+      def wrapper_for(val)
+        subclasses.find do |subclass|
+          val == subclass.delegate
         end
       end
 

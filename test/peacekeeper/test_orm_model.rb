@@ -26,14 +26,6 @@ end
 #
 ###
 
-#Peacekeeper::Model.config['database'] = 'test.db'
-#Peacekeeper::Model.config['adapter'] = 'sqlite3'
-#Peacekeeper::Model.data_source = :active_record
-#
-#Peacekeeper::Model.connection.execute("CREATE TABLE my_tests (id INTEGER PRIMARY KEY);")
-#Peacekeeper::Model.connection.execute("CREATE TABLE my_subtests (id INTEGER PRIMARY KEY, other_id INTEGER);")
-
-
 describe Peacekeeper::Model do
 
   describe 'manages an data source selection' do
@@ -165,7 +157,7 @@ describe Peacekeeper::Model do
     end
 
     it 'maps a hash return value to a hash' do
-      res = MyTestModel.new.associations
+      res = MyTestModel.new.attributes
       res.should.be.kind_of Hash
     end
 
