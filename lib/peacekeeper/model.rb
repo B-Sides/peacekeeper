@@ -32,19 +32,18 @@ module Peacekeeper
     end
 
     def wrap(val)
-      case val
-        when Hash
-          Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
-        when Enumerable
-          val.map { |i| wrap(i) }
-        when (self.kind_of?(Class) ? delegate : Pass)
-          new(val)
-        when delegate.class
-          self.class.new(val)
-        when *(data_classes = Model.subclasses.each_with_object({}) { |e, h| h[e.data_class] = e }).keys
-          data_classes[val.class].new(val)
-        else
-          val
+      if (self.kind_of?(Class) && val.kind_of?(delegate))
+        new(val)
+      elsif (self.kind_of?(Peacekeeper::Model) && val.kind_of?(delegate.class))
+        self.class.new(val)
+      elsif (Peacekeeper::Model.has_wrapper_for?(val.class))
+        Peacekeeper::Model.wrapper_for(val.class).new(val)
+      elsif (val.kind_of?(Hash))
+        Hash[*val.flat_map { |k, v| [k, wrap(v)] }]
+      elsif (val.kind_of?(Enumerable) || val.methods.include?(:each))
+        val.map { |i| wrap(i) }
+      else
+        val
       end
     end
 
@@ -87,6 +86,7 @@ module Peacekeeper
       def subclasses; (@subclasses ||= []); end
 
       def config; (@config ||= {}); end
+      def connection; (@connection ||= nil); end
 
       def config=(new_config)
         @config = new_config
@@ -105,6 +105,10 @@ module Peacekeeper
         when :sequel
           require 'sequel'
           Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
+        when :active_record
+          require 'active_record'
+          ActiveRecord::Base.establish_connection(active_record_config)
+          @connection = ActiveRecord::Base.connection()
         when :api
           require 'nasreddin'
         when :mock
@@ -152,6 +156,16 @@ module Peacekeeper
         end
       end
 
+      def has_wrapper_for?(val)
+        !!wrapper_for(val)
+      end
+
+      def wrapper_for(val)
+        subclasses.find do |subclass|
+          val == subclass.delegate
+        end
+      end
+
       def setup(parent)
         self.config = parent.config
         self.data_source = parent.data_source
@@ -193,6 +207,22 @@ module Peacekeeper
           end
         end
         uri
+      end
+
+      def active_record_config
+        protocol = config['protocol'] || config['adapter'] || 'sqlite3'
+        # Set the adapter (DB engine; i.e. mysql, sqlite3, postgres, etc.)
+
+        database = config['database']
+        ar_config = {
+          adapter:  protocol,
+          database: database
+        }
+        ar_config['host'] = config['host'] if config['host']
+        ar_config['username'] = config['username'] if config['username']
+        ar_config['password'] = config['password'] if config['password']
+        ar_config['driver'] = config['driver'] if config['driver']
+        ar_config
       end
 
       def paramize(options)
