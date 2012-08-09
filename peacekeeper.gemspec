@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'peacekeeper'
 
   s.files = Dir['{lib,test}/**/*']
-  s.files += ['Rakefile']
+  s.files += ['Rakefile', 'README.md']
   s.test_files = Dir['test/**/*']
   s.require_paths = ['lib']
 
