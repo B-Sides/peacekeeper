@@ -64,14 +64,6 @@ describe Peacekeeper::Model do
 
     it 'is nil by default' do
       Peacekeeper::Model.data_source.should.be.nil
-
-      # Peacekeeper::Model#orm is depricated
-      Peacekeeper::Model.orm.should.be.nil
-    end
-
-    it 'is accessible via the depricated #orm methods' do
-      Peacekeeper::Model.orm = :sequel
-      Peacekeeper::Model.orm.should.equal :sequel
     end
 
     describe 'set to Sequel' do
