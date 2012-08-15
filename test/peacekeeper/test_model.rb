@@ -263,7 +263,10 @@ describe Peacekeeper::Model do
         class MyTestModel < Peacekeeper::Model
         end
         res = MyTestModel.new
-        should.raise(NameError) { res.to_json }
+        -> { res.to_json }.
+            should.raise(NoMethodError)
+        -> { Object.new.to_json }.
+            should.raise(RuntimeError)
     end
 
     it 'can define methods that operate directly on the data class' do
