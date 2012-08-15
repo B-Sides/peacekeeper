@@ -254,6 +254,18 @@ describe Peacekeeper::Model do
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
 
+    it 'should undefine :to_json method' do
+        class Object
+            def to_json
+                raise "don't call me"
+            end
+        end
+        class MyTestModel < Peacekeeper::Model
+        end
+        res = MyTestModel.new
+        should.raise(NameError) { res.to_json }
+    end
+
     it 'can define methods that operate directly on the data class' do
       class MyTestModel
         def_data_method :others_first_subtest do

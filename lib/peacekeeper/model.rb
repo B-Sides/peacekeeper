@@ -256,6 +256,11 @@ module Peacekeeper
       else
         @data = data_class.new(*args)
       end
+
+      class<<self
+         puts "undefining :to_json"
+         undef :to_json if respond_to?(:to_json)
+      end
     end
 
     def ==(obj)
