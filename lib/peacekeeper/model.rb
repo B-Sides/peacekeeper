@@ -86,7 +86,6 @@ module Peacekeeper
       def subclasses; (@subclasses ||= []); end
 
       def config; (@config ||= {}); end
-      def connection; (@connection ||= nil); end
 
       def config=(new_config)
         @config = new_config
@@ -107,7 +106,6 @@ module Peacekeeper
         when :active_record
           require 'active_record'
           ActiveRecord::Base.establish_connection(active_record_config)
-          @connection = ActiveRecord::Base.connection()
         when :api
           require 'nasreddin'
         when :mock
