@@ -14,14 +14,14 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'peacekeeper'
 
   s.files = Dir['{lib,test}/**/*']
-  s.files += ['Rakefile']
+  s.files += ['Rakefile', 'README.md']
   s.test_files = Dir['test/**/*']
   s.require_paths = ['lib']
 
   s.add_runtime_dependency 'sequel', '~> 3.33.0'
   s.add_runtime_dependency 'activerecord', '~> 3.2.6'
   s.add_runtime_dependency 'activerecord-jdbc-adapter', '~> 1.2.2'
-  s.add_runtime_dependency 'nasreddin', '~> 0.0.1'
+  s.add_runtime_dependency 'nasreddin', '~> 0.1.1'
   s.add_development_dependency 'jdbc-sqlite3', '~> 3.7.2'
   s.add_development_dependency 'bacon', '~> 1.1.0'
   s.add_development_dependency 'facon', '~> 0.5.0'
