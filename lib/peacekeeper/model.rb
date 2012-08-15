@@ -258,8 +258,9 @@ module Peacekeeper
       end
 
       class<<self
-         puts "undefining :to_json"
-         undef :to_json if respond_to?(:to_json)
+        if respond_to?(:to_json)
+         undef_method :to_json 
+        end
       end
     end
 
