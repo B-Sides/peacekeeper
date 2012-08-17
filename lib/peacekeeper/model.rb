@@ -258,16 +258,15 @@ module Peacekeeper
       end
 
       class<<self
-        if respond_to?(:to_json)
-         undef_method :to_json 
+        if respond_to?(:to_json) && !methods(false).include?(:to_json)
+         undef_method :to_json
         end
       end
     end
 
     def ==(obj)
       obj.equal?(self) || @data == obj.data
-    end
-
+    end 
     def data_class
       self.class.data_class
     end
