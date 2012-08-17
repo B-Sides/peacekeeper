@@ -254,13 +254,22 @@ describe Peacekeeper::Model do
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
 
-    it 'should undefine :to_json method' do
-        class Object
-            def to_json
-                raise "don't call me"
-            end
+    it 'should prevent calling :to_json inherited from Object' do
+      class Object
+        def to_json
+          raise "don't call me"
         end
-        class MyTestModel < Peacekeeper::Model
+      end
+      class MyTestModel < Peacekeeper::Model
+      end
+      class MyTest
+        def to_json
+          :ok
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
+      -> { Object.new.to_json }.should.raise(RuntimeError)
+    end
         end
         res = MyTestModel.new
         -> { res.to_json }.
