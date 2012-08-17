@@ -257,9 +257,9 @@ module Peacekeeper
         @data = data_class.new(*args)
       end
 
-      class<<self
-        if respond_to?(:to_json) && !methods(false).include?(:to_json)
-         undef_method :to_json
+      unless self.class.instance_methods(false).include?(:to_json)
+        class<<self
+          undef_method :to_json if respond_to?(:to_json)
         end
       end
     end
