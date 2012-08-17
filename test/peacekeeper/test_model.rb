@@ -270,12 +270,24 @@ describe Peacekeeper::Model do
       MyTestModel.new.to_json.should.equal :ok
       -> { Object.new.to_json }.should.raise(RuntimeError)
     end
+
+    it 'should allow redefinition of :to_json in the model' do
+      class Object
+        def to_json
+          raise "don't call me"
         end
-        res = MyTestModel.new
-        -> { res.to_json }.
-            should.raise(NoMethodError)
-        -> { Object.new.to_json }.
-            should.raise(RuntimeError)
+      end
+      class MyTestModel < Peacekeeper::Model
+        def to_json
+          :ok
+        end
+      end
+      class MyTest
+        def to_json
+          :ko
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
     end
 
     it 'can define methods that operate directly on the data class' do
