@@ -246,6 +246,42 @@ describe Peacekeeper::Model do
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
 
+    it 'should prevent calling :to_json inherited from Object' do
+      class Object
+        def to_json
+          raise "don't call me"
+        end
+      end
+      class MyTestModel < Peacekeeper::Model
+      end
+      class MyTest
+        def to_json
+          :ok
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
+      -> { Object.new.to_json }.should.raise(RuntimeError)
+    end
+
+    it 'should allow redefinition of :to_json in the model' do
+      class Object
+        def to_json
+          raise "don't call me"
+        end
+      end
+      class MyTestModel < Peacekeeper::Model
+        def to_json
+          :ok
+        end
+      end
+      class MyTest
+        def to_json
+          :ko
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
+    end
+
     it 'can define methods that operate directly on the data class' do
       class MyTestModel
         def_data_method :others_first_subtest do
