@@ -64,14 +64,6 @@ describe Peacekeeper::Model do
 
     it 'is nil by default' do
       Peacekeeper::Model.data_source.should.be.nil
-
-      # Peacekeeper::Model#orm is depricated
-      Peacekeeper::Model.orm.should.be.nil
-    end
-
-    it 'is accessible via the depricated #orm methods' do
-      Peacekeeper::Model.orm = :sequel
-      Peacekeeper::Model.orm.should.equal :sequel
     end
 
     describe 'set to Sequel' do
@@ -252,6 +244,42 @@ describe Peacekeeper::Model do
       my_test_model = MyTestModel.create name: 'Another Test'
       my_test_model.should.be.kind_of MyTestModel
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
+    end
+
+    it 'should prevent calling :to_json inherited from Object' do
+      class Object
+        def to_json
+          raise "don't call me"
+        end
+      end
+      class MyTestModel < Peacekeeper::Model
+      end
+      class MyTest
+        def to_json
+          :ok
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
+      -> { Object.new.to_json }.should.raise(RuntimeError)
+    end
+
+    it 'should allow redefinition of :to_json in the model' do
+      class Object
+        def to_json
+          raise "don't call me"
+        end
+      end
+      class MyTestModel < Peacekeeper::Model
+        def to_json
+          :ok
+        end
+      end
+      class MyTest
+        def to_json
+          :ko
+        end
+      end
+      MyTestModel.new.to_json.should.equal :ok
     end
 
     it 'can define methods that operate directly on the data class' do

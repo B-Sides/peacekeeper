@@ -96,7 +96,6 @@ module Peacekeeper
       end
 
       def data_source; (@data_source ||= nil); end
-      alias :orm :data_source # orm is depricated
 
       def data_source=(source)
         @data_source = source
@@ -122,7 +121,6 @@ module Peacekeeper
 
         @data_source
       end
-      alias :orm= :data_source= # orm= is depricated
 
       def data_class
         return nil if self == Model
@@ -256,12 +254,17 @@ module Peacekeeper
       else
         @data = data_class.new(*args)
       end
+
+      unless self.class.instance_methods(false).include?(:to_json)
+        class<<self
+          undef_method :to_json if respond_to?(:to_json)
+        end
+      end
     end
 
     def ==(obj)
       obj.equal?(self) || @data == obj.data
-    end
-
+    end 
     def data_class
       self.class.data_class
     end
