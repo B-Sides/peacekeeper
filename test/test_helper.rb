@@ -7,15 +7,7 @@ begin
 rescue LoadError
   $stderr.puts 'Install the pry gem for better debugging.'
 end
-require 'fileutils'
 require 'facon'
-
-TEMP_DIR = File.expand_path('../tmp/', __FILE__) unless defined? TEMP_DIR
-SEQUEL_TEST_DB = File.join(TEMP_DIR, 'sequel.sqlite3') unless defined? SEQUEL_TEST_DB
-ACTIVERECORD_TEST_DB = File.join(TEMP_DIR, 'active_record.sqlite3') unless defined? ACTIVERECORD_TEST_DB
-
-# Clear out the tmp dir at the start
-FileUtils.rm_rf(File.join(TEMP_DIR, '*'))
 
 # Until JRuby fixes http://jira.codehaus.org/browse/JRUBY-6550 ...
 class Should
@@ -37,3 +29,30 @@ class Should
     end
   end
 end
+
+###
+#
+# This is a dirty, dirty trick to write tests that test `require`:
+# TODO: Need to create a Loader class to properly fix this.
+#
+module RequireMock
+  REQUIRE_SENTINEL = []
+
+  def require(lib)
+    REQUIRE_SENTINEL << lib
+    super
+  end
+end
+Object.send(:include, RequireMock)
+
+def require_lib(lib)
+  ->(block) do
+    REQUIRE_SENTINEL.clear
+    block.call
+    REQUIRE_SENTINEL.include?(lib)
+  end
+end
+
+#
+###
+

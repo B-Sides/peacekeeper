@@ -1,31 +1,6 @@
 require_relative '../test_helper'
 require 'peacekeeper/model'
 
-###
-#
-# This is a dirty, dirty trick to write tests that test `require`:
-#
-module RequireMock
-  REQUIRE_SENTINEL = []
-
-  def require(lib)
-    REQUIRE_SENTINEL << lib
-    super
-  end
-end
-Object.send(:include, RequireMock)
-
-def require_lib(lib)
-  ->(block) do
-    REQUIRE_SENTINEL.clear
-    block.call
-    REQUIRE_SENTINEL.include?(lib)
-  end
-end
-
-#
-###
-
 describe Peacekeeper::Model do
 
   describe 'manages an data source selection' do
@@ -74,18 +49,10 @@ describe Peacekeeper::Model do
         AfterSettingModel.data_source.should.equal :active_record
       end
 
-      #it 'should only connect to the Database once' do
-      #  class BeforeModel < Peacekeeper::Model;
-      #  end
-      #  class BeforeSettingModel < Peacekeeper::Model;
-      #  end
-      #  Peacekeeper::Model.data_source = :active_record
-      #  class AfterModel < Peacekeeper::Model;
-      #  end
-      #  class AfterSettingModel < Peacekeeper::Model;
-      #  end
-      #  ActiveRecord::DATABASES.length.should.equal 1
-      #end
+      it 'should connect to the Database' do
+        Peacekeeper::Model.data_source = :active_record
+        ActiveRecord::Base.connected?.should.equal true
+      end
     end
   end
   describe 'used to create a model subclass with Active Record' do
@@ -98,12 +65,10 @@ describe Peacekeeper::Model do
     class MySubtestModel < Peacekeeper::Model; end
 
     # Setup the DB and populate with some test data
-    Peacekeeper::Model.config['database'] = ACTIVERECORD_TEST_DB
-    Peacekeeper::Model.config['adapter'] = 'sqlite3'
+    Peacekeeper::Model.config['database'] = ':memory:'
+    Peacekeeper::Model.config[:protocol] = 'jdbc:sqlite:'
     Peacekeeper::Model.data_source = :active_record
 
-    ActiveRecord::Base.connection.execute("DROP TABLE my_tests;")
-    ActiveRecord::Base.connection.execute("DROP TABLE my_subtests;")
     ActiveRecord::Base.connection.execute("CREATE TABLE my_tests (id INTEGER PRIMARY KEY, other_id INTEGER, name STRING);")
     ActiveRecord::Base.connection.execute("CREATE TABLE my_subtests (id INTEGER PRIMARY KEY, my_test_id INTEGER, name STRING);")
 
@@ -112,31 +77,31 @@ describe Peacekeeper::Model do
     ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (1, 1, 'First');")
     ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (2, 1, 'Second');")
 
-#    it 'delegates data class methods to the data class' do
-#      (MyTestModel.respond_to?(:table_name)).should.be.true
-#      MyTestModel.table_name.should.equal :my_tests
-#    end
-#
-#    describe 'when instantiated' do
-#      my_test_model = MyTestModel.new
-#
-#      it 'creates a data instance' do
-#        my_test_model.data.class.should.equal MyTest
-#      end
-#
-#      it 'delegates data methods to the data object' do
-#        my_test_model.columns.should.equal [:id, :other_id, :name]
-#      end
-#
-#      it 'still has access to methods defined on the model' do
-#        my_test_model.test.should.be.equal :ok
-#      end
-#
-#      it 'wraps delegated methods that return data class instances' do
-#        a_test = MyTestModel.where(name: 'Other').first
-#        a_test.other.should.be.kind_of MyTestModel
-#      end
-#    end
+    it 'delegates data class methods to the data class' do
+      (MyTestModel.respond_to?(:table_name)).should.be.true
+      MyTestModel.table_name.should.equal "my_tests"
+    end
+
+    describe 'when instantiated' do
+      my_test_model = MyTestModel.new
+
+      it 'creates a data instance' do
+        my_test_model.data.class.should.equal MyTest
+      end
+
+      it 'delegates data methods to the data object' do
+        my_test_model.attribute_names.should.equal ['id', 'other_id', 'name']
+      end
+
+      it 'still has access to methods defined on the model' do
+        my_test_model.test.should.be.equal :ok
+      end
+
+      it 'wraps delegated methods that return data class instances' do
+        a_test = MyTestModel.where(name: 'Other').first
+        a_test.other.should.be.kind_of MyTestModel
+      end
+    end
 
     it 'wraps a data object return value in a model object' do
       res = MyTestModel.first

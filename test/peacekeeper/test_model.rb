@@ -1,31 +1,6 @@
 require_relative '../test_helper'
 require 'peacekeeper/model'
 
-###
-#
-# This is a dirty, dirty trick to write tests that test `require`:
-#
-module RequireMock
-  REQUIRE_SENTINEL = []
-
-  def require(lib)
-    REQUIRE_SENTINEL << lib
-    super
-  end
-end
-Object.send(:include, RequireMock)
-
-def require_lib(lib)
-  ->(block) do
-    REQUIRE_SENTINEL.clear
-    block.call
-    REQUIRE_SENTINEL.include?(lib)
-  end
-end
-
-#
-###
-
 describe Peacekeeper::Model do
   it 'cannot be instantiated directly' do
     -> { Peacekeeper::Model.new }.should.raise(RuntimeError)
@@ -47,14 +22,15 @@ describe Peacekeeper::Model do
     end
 
     it 'is inherited by subclasses' do
+      path = 'tmp/test_db.sqlite'
       class SubclassBeforeModel < Peacekeeper::Model;
       end
-      Peacekeeper::Model.config = {path: SEQUEL_TEST_DB}
+      Peacekeeper::Model.config = {path: path}
       class SubclassAfterModel < Peacekeeper::Model;
       end
 
-      SubclassBeforeModel.config[:path].should.equal SEQUEL_TEST_DB
-      SubclassAfterModel.config[:path].should.equal SEQUEL_TEST_DB
+      SubclassBeforeModel.config[:path].should.equal path
+      SubclassAfterModel.config[:path].should.equal path
     end
   end
 
@@ -159,7 +135,7 @@ describe Peacekeeper::Model do
 
   describe 'used to create a model subclass with Sequel' do
     # Repeat config here in case these tests are run alone
-    Peacekeeper::Model.config[:path] = SEQUEL_TEST_DB
+    Peacekeeper::Model.config[:protocol] = 'jdbc:sqlite::memory:'
     Peacekeeper::Model.data_source = :sequel
 
     class MyTestModel < Peacekeeper::Model
@@ -172,13 +148,12 @@ describe Peacekeeper::Model do
 
     # Setup the DB and populate with some test data
     DB = Sequel::Model.db
-    DB.drop_table(*DB.tables)
     DB.create_table :my_tests do
       primary_key :id
       foreign_key :other_id, :my_tests
       String :name
     end
-    DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
+    DB[:my_tests].insert(id: 1, name: 'A Test')
     DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
     DB[:my_tests].filter(id: 1).update(other_id: 2)
 
@@ -245,7 +220,6 @@ describe Peacekeeper::Model do
       my_test_model.should.be.kind_of MyTestModel
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
-
     it 'should prevent calling :to_json inherited from Object' do
       class Object
         def to_json
