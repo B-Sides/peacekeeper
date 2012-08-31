@@ -7,10 +7,6 @@ describe Peacekeeper::Model do
     # Implementation deatail...
     Peacekeeper::Model.instance_variable_set(:@subclasses, [])
 
-    it 'is nil by default' do
-      Peacekeeper::Model.data_source.should.be.nil
-    end
-
     describe 'set to Active Record' do
       before do
         Peacekeeper::Model.data_source = nil
@@ -21,32 +17,32 @@ describe Peacekeeper::Model do
       end
 
       it 'loads the Data object for subclasses created before' do
-        class BeforeModel < Peacekeeper::Model;
+        class BeforeArModel < Peacekeeper::Model;
         end
         Peacekeeper::Model.data_source = :active_record
         lambda do
-          BeforeModel.data_class.should.equal Before
-        end.should require_lib('data/active_record/before')
+          BeforeArModel.data_class.should.equal BeforeAr
+        end.should require_lib('data/active_record/before_ar')
       end
 
       it 'loads the Data object for subclasses created after' do
         Peacekeeper::Model.data_source = :active_record
-        class AfterModel < Peacekeeper::Model;
+        class AfterArModel < Peacekeeper::Model;
         end
         lambda do
-          AfterModel.data_class.should.equal After
-        end.should require_lib('data/active_record/after')
+          AfterArModel.data_class.should.equal AfterAr
+        end.should require_lib('data/active_record/after_ar')
       end
 
       it 'propogates the data source setting to subclasses' do
-        class BeforeSettingModel < Peacekeeper::Model;
+        class BeforeSettingArModel < Peacekeeper::Model;
         end
         Peacekeeper::Model.data_source = :active_record
-        class AfterSettingModel < Peacekeeper::Model;
+        class AfterSettingArModel < Peacekeeper::Model;
         end
 
-        BeforeSettingModel.data_source.should.equal :active_record
-        AfterSettingModel.data_source.should.equal :active_record
+        BeforeSettingArModel.data_source.should.equal :active_record
+        AfterSettingArModel.data_source.should.equal :active_record
       end
 
       it 'should connect to the Database' do
@@ -56,37 +52,37 @@ describe Peacekeeper::Model do
     end
   end
   describe 'used to create a model subclass with Active Record' do
-    class MyTestModel < Peacekeeper::Model
+    class MyTestArModel < Peacekeeper::Model
       def test
         :ok
       end
     end
 
-    class MySubtestModel < Peacekeeper::Model; end
+    class MySubtestArModel < Peacekeeper::Model; end
 
     # Setup the DB and populate with some test data
     Peacekeeper::Model.config['database'] = ':memory:'
     Peacekeeper::Model.config[:protocol] = 'jdbc:sqlite:'
     Peacekeeper::Model.data_source = :active_record
 
-    ActiveRecord::Base.connection.execute("CREATE TABLE my_tests (id INTEGER PRIMARY KEY, other_id INTEGER, name STRING);")
-    ActiveRecord::Base.connection.execute("CREATE TABLE my_subtests (id INTEGER PRIMARY KEY, my_test_id INTEGER, name STRING);")
+    ActiveRecord::Base.connection.execute("CREATE TABLE my_test_ars (id INTEGER PRIMARY KEY, other_id INTEGER, name STRING);")
+    ActiveRecord::Base.connection.execute("CREATE TABLE my_subtest_ars (id INTEGER PRIMARY KEY, my_test_ar_id INTEGER, name STRING);")
 
-    ActiveRecord::Base.connection.execute("INSERT INTO my_tests (id,other_id,name) VALUES (1, 2, 'A Test');")
-    ActiveRecord::Base.connection.execute("INSERT INTO my_tests (id,other_id,name) VALUES (2, 1, 'Other');")
-    ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (1, 1, 'First');")
-    ActiveRecord::Base.connection.execute("INSERT INTO my_subtests (id,my_test_id,name) VALUES (2, 1, 'Second');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_test_ars (id,other_id,name) VALUES (1, 2, 'A Test');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_test_ars (id,other_id,name) VALUES (2, 1, 'Other');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_subtest_ars (id,my_test_ar_id,name) VALUES (1, 1, 'First');")
+    ActiveRecord::Base.connection.execute("INSERT INTO my_subtest_ars (id,my_test_ar_id,name) VALUES (2, 1, 'Second');")
 
     it 'delegates data class methods to the data class' do
-      (MyTestModel.respond_to?(:table_name)).should.be.true
-      MyTestModel.table_name.should.equal "my_tests"
+      (MyTestArModel.respond_to?(:table_name)).should.be.true
+      MyTestArModel.table_name.should.equal "my_test_ars"
     end
 
     describe 'when instantiated' do
-      my_test_model = MyTestModel.new
+      my_test_model = MyTestArModel.new
 
       it 'creates a data instance' do
-        my_test_model.data.class.should.equal MyTest
+        my_test_model.data.class.should.equal MyTestAr
       end
 
       it 'delegates data methods to the data object' do
@@ -98,70 +94,70 @@ describe Peacekeeper::Model do
       end
 
       it 'wraps delegated methods that return data class instances' do
-        a_test = MyTestModel.where(name: 'Other').first
-        a_test.other.should.be.kind_of MyTestModel
+        a_test = MyTestArModel.where(name: 'Other').first
+        a_test.other.should.be.kind_of MyTestArModel
       end
     end
 
     it 'wraps a data object return value in a model object' do
-      res = MyTestModel.first
-      res.should.be.kind_of MyTestModel
+      res = MyTestArModel.first
+      res.should.be.kind_of MyTestArModel
     end
 
     it 'wraps a collection of data object return values in model objects' do
-      res = MyTestModel.all
+      res = MyTestArModel.all
       res.should.be.kind_of Array
-      res.each { |i| i.should.be.kind_of MyTestModel }
+      res.each { |i| i.should.be.kind_of MyTestArModel }
     end
 
     it 'wraps return values from other model objects' do
-      test = MyTestModel.first
-      res = test.my_subtests
+      test = MyTestArModel.first
+      res = test.my_subtest_ars
       res.should.be.kind_of Array
-      res.each { |i| i.should.be.kind_of MySubtestModel }
+      res.each { |i| i.should.be.kind_of MySubtestArModel }
     end
 
     it 'maps a hash return value to a hash' do
-      res = MyTestModel.new.attributes
+      res = MyTestArModel.new.attributes
       res.should.be.kind_of Hash
     end
 
     it 'delegates class methods with an argument' do
-      my_test_model = MyTestModel.create name: 'Another Test'
-      my_test_model.should.be.kind_of MyTestModel
-      MyTestModel.where(name: 'Another Test').first.should.equal my_test_model
+      my_test_model = MyTestArModel.create name: 'Another Test'
+      my_test_model.should.be.kind_of MyTestArModel
+      MyTestArModel.where(name: 'Another Test').first.should.equal my_test_model
     end
 
     it 'can define methods that operate directly on the data class' do
-      class MyTestModel
+      class MyTestArModel
         def_data_method :others_first_subtest do
-          other.my_subtests.first
+          other.my_subtest_ars.first
         end
       end
-      res = MyTestModel.where(id: 2).first.others_first_subtest
-      res.should.be.kind_of MySubtestModel
+      res = MyTestArModel.where(id: 2).first.others_first_subtest
+      res.should.be.kind_of MySubtestArModel
       res.name.should.equal 'First'
     end
 
     it 'can define methods that operate directly on the data class and takes arguments' do
-      class MyTestModel
+      class MyTestArModel
         def_data_method :others_nth_subtest do |n|
-          other.my_subtests[n]
+          other.my_subtest_ars[n]
         end
       end
-      res = MyTestModel.where(id: 2).first.others_nth_subtest(1)
-      res.should.be.kind_of MySubtestModel
+      res = MyTestArModel.where(id: 2).first.others_nth_subtest(1)
+      res.should.be.kind_of MySubtestArModel
       res.name.should.equal 'Second'
     end
 
     it 'can define class methods that operate directly on the data class' do
-      class MyTestModel
+      class MyTestArModel
         def_singleton_data_method :first_subtest do
-          first.my_subtests.first
+          first.my_subtest_ars.first
         end
       end
-      res = MyTestModel.first_subtest
-      res.should.be.kind_of MySubtestModel
+      res = MyTestArModel.first_subtest
+      res.should.be.kind_of MySubtestArModel
       res.name.should.equal 'First'
     end
   end
