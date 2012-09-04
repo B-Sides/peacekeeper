@@ -8,6 +8,7 @@ rescue LoadError
   $stderr.puts 'Install the pry gem for better debugging.'
 end
 require 'facon'
+require 'peacekeeper'
 
 # Until JRuby fixes http://jira.codehaus.org/browse/JRUBY-6550 ...
 class Should

@@ -1,5 +1,4 @@
 require_relative '../test_helper'
-require 'peacekeeper/model'
 
 describe Peacekeeper::Model do
 
