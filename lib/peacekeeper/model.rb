@@ -19,10 +19,13 @@ module Peacekeeper
       def subclasses; (@subclasses ||= []); end
 
       def config; (@config ||= {}); end
-      def connection; (@connection ||= nil); end
 
       def config=(new_config)
         @config = new_config
+        @config['data_name'] = data_name
+        @config['data_lib_name'] = data_lib_name
+        @loader = Loader.new(@config)
+
         subclasses.each do |sub|
           sub.config = @config
         end
@@ -32,19 +35,10 @@ module Peacekeeper
 
       def data_source=(source)
         @data_source = source
-        @data_class = nil
-        case source
-        when :sequel
-          require 'sequel'
-          Sequel::Model.db = Sequel::DATABASES.find { |db| db.uri == sequel_db_uri } || Sequel.connect(sequel_db_uri)
-        when :active_record
-          require 'active_record'
-          ActiveRecord::Base.establish_connection(active_record_config)
-          @connection = ActiveRecord::Base.connection()
-        when :api
-          require 'nasreddin'
-        when :mock
-          require config[:mock_library] if config[:mock_library]
+        @loader.source = source
+        @loader.load_source
+
+        if source == :mock
           data_class # Trigger mock data_class creation
         end
 
@@ -57,6 +51,7 @@ module Peacekeeper
 
       def data_class
         return nil if self == Model
+        #@data_class ||= (@loader.nil? ? nil : @loader.load_data_source)
         @data_class ||= begin
           if data_source.nil?
             nil
@@ -102,65 +97,6 @@ module Peacekeeper
         self.data_source = parent.data_source
       end
 
-      # Construct uri to connect to database
-      # Sequel: http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html
-      def sequel_db_uri
-        # Set the protocol (DB engine; i.e. mysql, sqlite3, postgres, etc.)
-        protocol = config['protocol'] || config['adapter'] || 'sqlite'
-        if RUBY_ENGINE == 'jruby'
-          protocol = "jdbc:#{protocol}" unless protocol.start_with? "jdbc:"
-        end
-
-        # Set the path (hostname & database name)
-        path = "#{config['host'] || config['path']}/#{config['database']}"
-        path = '' if path == '/' # Clear path if 'host', 'path', and 'database' are all unset
-
-        # Set the user and password
-        if RUBY_ENGINE == 'jruby' && protocol == 'jdbc:mysql'
-          # Special case for JRuby and MySQL
-          user_pass = "?user=#{config['username']}&password=#{config['password']}"
-          server_path = "#{path}#{user_pass}"
-        else
-          user_pass = "#{config['username']}:#{config['password']}@"
-          user_pass = '' if user_pass == ':@' # Clear user_pass if both 'username' and 'password' are unset
-          server_path = "#{user_pass}#{path}"
-        end
-
-        # Finally, put the protocol and path components together
-        server_path = "/#{server_path}" unless server_path.empty?
-        uri = "#{protocol}:/#{server_path}"
-        uri = 'jdbc:sqlite::memory:' if uri == 'jdbc:sqlite:/' && RUBY_ENGINE == 'jruby'
-        if config['options']
-          if uri =~ /\?/
-            uri += "&#{paramize(config['options'])}"
-          else
-            uri += "?#{paramize(config['options'])}"
-          end
-        end
-        uri
-      end
-
-      def active_record_config
-        protocol = config['protocol'] || config['adapter'] || 'sqlite3'
-        # Set the adapter (DB engine; i.e. mysql, sqlite3, postgres, etc.)
-
-        database = config['database']
-        ar_config = {
-          adapter:  protocol,
-          database: database
-        }
-        ar_config['host'] = config['host'] if config['host']
-        ar_config['username'] = config['username'] if config['username']
-        ar_config['password'] = config['password'] if config['password']
-        ar_config['driver'] = config['driver'] if config['driver']
-        ar_config
-      end
-
-      def paramize(options)
-        params = options.map { |k, v| "#{k}=#{v}" }
-        "#{params.join('&')}"
-      end
-
       def data_name
         self.name.sub(/Model$/, '')
       end
@@ -174,6 +110,7 @@ module Peacekeeper
         name.downcase!
         name
       end
+
     end
 
     include ModelDelegation

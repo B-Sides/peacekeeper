@@ -46,6 +46,7 @@ describe Peacekeeper::Model do
 
       it 'should connect to the Database' do
         Peacekeeper::Model.data_source = :active_record
+        ActiveRecord::Base.connection() # Force AR to ~actually~ connect to the DB
         ActiveRecord::Base.connected?.should.equal true
       end
     end
