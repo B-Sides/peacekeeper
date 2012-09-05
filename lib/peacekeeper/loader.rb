@@ -23,26 +23,6 @@ module Peacekeeper
       end
     end
 
-    def load_data_source
-      if source.nil?
-        nil
-      elsif source == :mock
-        Kernel.const_set(config['data_name'], Class.new do
-                                      def self.new(opts = {})
-                                        mock(self.name.gsub(/^.*:/, ''), opts)
-                                      end
-                                      def self.method_missing(*)
-                                        self.new
-                                      end
-                                      def self.respond_to?(*)
-                                        true
-                                      end
-                                    end)
-      else
-        require "data/#{source}/#{config['data_lib_name']}"
-        Kernel.const_get(config['data_name'])
-      end
-    end
 
     # Construct uri to connect to database
     # Sequel: http://sequel.rubyforge.org/rdoc/files/doc/opening_databases_rdoc.html
@@ -102,16 +82,31 @@ module Peacekeeper
       params = options.map { |k, v| "#{k}=#{v}" }
       "#{params.join('&')}"
     end
-=begin
-    def data_lib_name
-      name = config['data_name']
-      name.gsub!(/::/, '/')
-      name.gsub!(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2')
-      name.gsub!(/([a-z\d])([A-Z])/, '\1_\2')
-      name.tr!("-", "_")
-      name.downcase!
-      name
+  end
+
+  module DataLoader
+    def self.data_class(config)
+      source = config[:source]
+      data_lib_name = config[:data_lib_name]
+      data_name = config[:data_name]
+      if source.nil?
+        nil
+      elsif source == :mock
+        Kernel.const_set(data_name, Class.new do
+                                      def self.new(opts = {})
+                                        mock(self.name.gsub(/^.*:/, ''), opts)
+                                      end
+                                      def self.method_missing(*)
+                                        self.new
+                                      end
+                                      def self.respond_to?(*)
+                                        true
+                                      end
+                                    end)
+      else
+        require "data/#{source}/#{data_lib_name}"
+        Kernel.const_get(data_name)
+      end
     end
-=end
   end
 end

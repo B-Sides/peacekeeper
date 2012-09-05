@@ -1,56 +1,6 @@
 require_relative '../test_helper'
 
 describe Peacekeeper::Model do
-
-  describe 'manages an data source selection' do
-    # Implementation deatail...
-    Peacekeeper::Model.instance_variable_set(:@subclasses, [])
-
-    describe 'set to Active Record' do
-      before do
-        Peacekeeper::Model.data_source = nil
-      end
-
-      it 'requires the Active Record library' do
-        -> { Peacekeeper::Model.data_source = :active_record }.should require_lib('active_record')
-      end
-
-      it 'loads the Data object for subclasses created before' do
-        class BeforeArModel < Peacekeeper::Model;
-        end
-        Peacekeeper::Model.data_source = :active_record
-        lambda do
-          BeforeArModel.data_class.should.equal BeforeAr
-        end.should require_lib('data/active_record/before_ar')
-      end
-
-      it 'loads the Data object for subclasses created after' do
-        Peacekeeper::Model.data_source = :active_record
-        class AfterArModel < Peacekeeper::Model;
-        end
-        lambda do
-          AfterArModel.data_class.should.equal AfterAr
-        end.should require_lib('data/active_record/after_ar')
-      end
-
-      it 'propogates the data source setting to subclasses' do
-        class BeforeSettingArModel < Peacekeeper::Model;
-        end
-        Peacekeeper::Model.data_source = :active_record
-        class AfterSettingArModel < Peacekeeper::Model;
-        end
-
-        BeforeSettingArModel.data_source.should.equal :active_record
-        AfterSettingArModel.data_source.should.equal :active_record
-      end
-
-      it 'should connect to the Database' do
-        Peacekeeper::Model.data_source = :active_record
-        ActiveRecord::Base.connection() # Force AR to ~actually~ connect to the DB
-        ActiveRecord::Base.connected?.should.equal true
-      end
-    end
-  end
   describe 'used to create a model subclass with Active Record' do
     class MyTestArModel < Peacekeeper::Model
       def test

@@ -33,7 +33,7 @@ module Peacekeeper
 
       def data_source=(source)
         @data_source = source
-        @loader = Loader.new(config.merge(data_name: data_name, data_lib_name: data_lib_name, source: source))
+        @loader = Loader.new(config.merge(source: source))
         @loader.load_source
 
         if source == :mock
@@ -49,27 +49,7 @@ module Peacekeeper
 
       def data_class
         return nil if self == Model
-        #@data_class ||= (@loader.nil? ? nil : @loader.load_data_source)
-        @data_class ||= begin
-          if data_source.nil?
-            nil
-          elsif data_source == :mock
-            Kernel.const_set(data_name, Class.new do
-                                          def self.new(opts = {})
-                                            mock(self.name.gsub(/^.*:/, ''), opts)
-                                          end
-                                          def self.method_missing(*)
-                                            self.new
-                                          end
-                                          def self.respond_to?(*)
-                                            true
-                                          end
-                                        end)
-          else
-            require "data/#{data_source}/#{data_lib_name}"
-            Kernel.const_get(data_name)
-          end
-        end
+        @data_class ||= (data_source.nil? ? nil : DataLoader.data_class(data_name: data_name, data_lib_name: data_lib_name, source: data_source))
       end
       alias :delegate :data_class
 
