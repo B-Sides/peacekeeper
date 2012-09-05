@@ -4,10 +4,8 @@ module Peacekeeper
 
     def initialize(config)
       @config = config
+      @source = config[:source]
     end
-
-    def source; (@source ||= nil); end
-    def source=(source); @source = source; end
 
     def load_source
       case source

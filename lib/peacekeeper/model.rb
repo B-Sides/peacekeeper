@@ -22,20 +22,18 @@ module Peacekeeper
 
       def config=(new_config)
         @config = new_config
-        @config['data_name'] = data_name
-        @config['data_lib_name'] = data_lib_name
-        @loader = Loader.new(@config)
 
         subclasses.each do |sub|
           sub.config = @config
         end
+        @config
       end
 
       def data_source; (@data_source ||= nil); end
 
       def data_source=(source)
         @data_source = source
-        @loader.source = source
+        @loader = Loader.new(config.merge(data_name: data_name, data_lib_name: data_lib_name, source: source))
         @loader.load_source
 
         if source == :mock
