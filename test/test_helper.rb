@@ -30,30 +30,3 @@ class Should
     end
   end
 end
-
-###
-#
-# This is a dirty, dirty trick to write tests that test `require`:
-# TODO: Need to create a Loader class to properly fix this.
-#
-module RequireMock
-  REQUIRE_SENTINEL = []
-
-  def require(lib)
-    REQUIRE_SENTINEL << lib
-    super
-  end
-end
-Object.send(:include, RequireMock)
-
-def require_lib(lib)
-  ->(block) do
-    REQUIRE_SENTINEL.clear
-    block.call
-    REQUIRE_SENTINEL.include?(lib)
-  end
-end
-
-#
-###
-

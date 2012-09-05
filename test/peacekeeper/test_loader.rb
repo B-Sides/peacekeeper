@@ -15,25 +15,36 @@ describe Peacekeeper::Loader do
       end
 
       it 'requires the Sequel library' do
-        -> { Peacekeeper::Model.data_source = :sequel }.should require_lib('sequel')
+        loader = mock("Loader")
+        loader.should.receive(:load_source)
+        Peacekeeper::Loader.should.receive(:new).and_return(loader)
+        Peacekeeper::Model.data_source = :sequel
       end
 
       it 'loads the Data object for subclasses created before' do
+        loader = mock("Loader")
+        loader.should.receive(:load_source).times(3)
+        Peacekeeper::Loader.should.receive(:new).times(3).and_return(loader)
+
         class BeforeModel < Peacekeeper::Model;
         end
         Peacekeeper::Model.data_source = :sequel
         lambda do
           BeforeModel.data_class.should.equal Before
-        end.should require_lib('data/sequel/before')
+        end
       end
 
       it 'loads the Data object for subclasses created after' do
+        loader = mock("Loader")
+        loader.should.receive(:load_source).times(3)
+        Peacekeeper::Loader.should.receive(:new).times(3).and_return(loader)
+
         Peacekeeper::Model.data_source = :sequel
         class AfterModel < Peacekeeper::Model;
         end
         lambda do
           AfterModel.data_class.should.equal After
-        end.should require_lib('data/sequel/after')
+        end
       end
 
       it 'propogates the ORM setting to subclasses' do
@@ -61,53 +72,22 @@ describe Peacekeeper::Loader do
       end
     end
 
-    describe 'manages an data source selection' do
-      # Implementation deatail...
-      Peacekeeper::Model.instance_variable_set(:@subclasses, [])
+    describe 'set to Active Record' do
+      before do
+        Peacekeeper::Model.data_source = nil
+      end
 
-      describe 'set to Active Record' do
-        before do
-          Peacekeeper::Model.data_source = nil
-        end
+      it 'requires the Active Record library' do
+        loader = mock("Loader")
+        loader.should.receive(:load_source).times(5)
+        Peacekeeper::Loader.should.receive(:new).times(5).and_return(loader)
+        Peacekeeper::Model.data_source = :active_record
+      end
 
-        it 'requires the Active Record library' do
-          -> { Peacekeeper::Model.data_source = :active_record }.should require_lib('active_record')
-        end
-
-        it 'loads the Data object for subclasses created before' do
-          class BeforeArModel < Peacekeeper::Model;
-          end
-          Peacekeeper::Model.data_source = :active_record
-          lambda do
-            BeforeArModel.data_class.should.equal BeforeAr
-          end.should require_lib('data/active_record/before_ar')
-        end
-
-        it 'loads the Data object for subclasses created after' do
-          Peacekeeper::Model.data_source = :active_record
-          class AfterArModel < Peacekeeper::Model;
-          end
-          lambda do
-            AfterArModel.data_class.should.equal AfterAr
-          end.should require_lib('data/active_record/after_ar')
-        end
-
-        it 'propogates the data source setting to subclasses' do
-          class BeforeSettingArModel < Peacekeeper::Model;
-          end
-          Peacekeeper::Model.data_source = :active_record
-          class AfterSettingArModel < Peacekeeper::Model;
-          end
-
-          BeforeSettingArModel.data_source.should.equal :active_record
-          AfterSettingArModel.data_source.should.equal :active_record
-        end
-
-        it 'should connect to the Database' do
-          Peacekeeper::Model.data_source = :active_record
-          ActiveRecord::Base.connection() # Force AR to ~actually~ connect to the DB
-          ActiveRecord::Base.connected?.should.equal true
-        end
+      it 'should connect to the Database' do
+        Peacekeeper::Model.data_source = :active_record
+        ActiveRecord::Base.connection() # Force AR to ~actually~ connect to the DB
+        ActiveRecord::Base.connected?.should.equal true
       end
     end
 
@@ -116,7 +96,11 @@ describe Peacekeeper::Loader do
       Peacekeeper::Model.config[:mock_library] = 'facon'
 
       it 'requires the facon library' do
-        -> { Peacekeeper::Model.data_source = :mock}.should require_lib('facon')
+        loader = mock("Loader")
+        loader.should.receive(:load_source).times(5)
+        Peacekeeper::Loader.should.receive(:new).times(5).and_return(loader)
+
+        Peacekeeper::Model.data_source = :mock
       end
 
       it 'creates a data class ready for mocking' do
