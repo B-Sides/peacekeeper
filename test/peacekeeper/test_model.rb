@@ -1,30 +1,4 @@
 require_relative '../test_helper'
-require 'peacekeeper/model'
-
-###
-#
-# This is a dirty, dirty trick to write tests that test `require`:
-#
-module RequireMock
-  REQUIRE_SENTINEL = []
-
-  def require(lib)
-    REQUIRE_SENTINEL << lib
-    super
-  end
-end
-Object.send(:include, RequireMock)
-
-def require_lib(lib)
-  ->(block) do
-    REQUIRE_SENTINEL.clear
-    block.call
-    REQUIRE_SENTINEL.include?(lib)
-  end
-end
-
-#
-###
 
 describe Peacekeeper::Model do
   it 'cannot be instantiated directly' do
@@ -42,124 +16,26 @@ describe Peacekeeper::Model do
   end
 
   describe 'manages a database config' do
-    it 'is empty by default' do
-      Peacekeeper::Model.config.should.be.empty
-    end
+    #it 'is empty by default' do
+    #  Peacekeeper::Model.config.should.be.empty
+    #end
 
     it 'is inherited by subclasses' do
+      path = 'tmp/test_db.sqlite'
       class SubclassBeforeModel < Peacekeeper::Model;
       end
-      Peacekeeper::Model.config = {path: SEQUEL_TEST_DB}
+      Peacekeeper::Model.config = {path: path}
       class SubclassAfterModel < Peacekeeper::Model;
       end
 
-      SubclassBeforeModel.config[:path].should.equal SEQUEL_TEST_DB
-      SubclassAfterModel.config[:path].should.equal SEQUEL_TEST_DB
-    end
-  end
-
-  describe 'manages a data source selection' do
-    # Implementation deatail...
-    Peacekeeper::Model.instance_variable_set(:@subclasses, [])
-
-    it 'is nil by default' do
-      Peacekeeper::Model.data_source.should.be.nil
-    end
-
-    describe 'set to Sequel' do
-      before do
-        Peacekeeper::Model.data_source = nil
-      end
-
-      it 'requires the Sequel library' do
-        -> { Peacekeeper::Model.data_source = :sequel }.should require_lib('sequel')
-      end
-
-      it 'loads the Data object for subclasses created before' do
-        class BeforeModel < Peacekeeper::Model;
-        end
-        Peacekeeper::Model.data_source = :sequel
-        lambda do
-          BeforeModel.data_class.should.equal Before
-        end.should require_lib('data/sequel/before')
-      end
-
-      it 'loads the Data object for subclasses created after' do
-        Peacekeeper::Model.data_source = :sequel
-        class AfterModel < Peacekeeper::Model;
-        end
-        lambda do
-          AfterModel.data_class.should.equal After
-        end.should require_lib('data/sequel/after')
-      end
-
-      it 'propogates the ORM setting to subclasses' do
-        class BeforeSettingModel < Peacekeeper::Model;
-        end
-        Peacekeeper::Model.data_source = :sequel
-        class AfterSettingModel < Peacekeeper::Model;
-        end
-
-        BeforeSettingModel.data_source.should.equal :sequel
-        AfterSettingModel.data_source.should.equal :sequel
-      end
-
-      it 'should only connect to the Database once' do
-        class BeforeModel < Peacekeeper::Model;
-        end
-        class BeforeSettingModel < Peacekeeper::Model;
-        end
-        Peacekeeper::Model.data_source = :sequel
-        class AfterModel < Peacekeeper::Model;
-        end
-        class AfterSettingModel < Peacekeeper::Model;
-        end
-        Sequel::DATABASES.length.should.equal 1
-      end
-    end
-
-    describe 'set to mock' do
-      Peacekeeper::Model.data_source = :nil
-      Peacekeeper::Model.config[:mock_library] = 'facon'
-
-      it 'requires the facon library' do
-        -> { Peacekeeper::Model.data_source = :mock}.should require_lib('facon')
-      end
-
-      it 'creates a data class ready for mocking' do
-        class MyMockModel < Peacekeeper::Model; end
-        defined?(MyMock).should.equal 'constant'
-        MyMock.should.receive(:delegate_call)
-        MyMockModel.delegate_call
-      end
-
-      it 'returns empty mocks for data class calls by default' do
-        class MyMockableModel < Peacekeeper::Model; end
-
-        foo = MyMockableModel.get_foo
-
-        foo.name.should.equal 'MyMockable'
-        foo.should.be.kind_of Facon::Mock
-      end
-
-      it 'returns a mock with properties set when #new is called with options' do
-        class MyInstantiableMockModel < Peacekeeper::Model; end
-
-        user = MyInstantiableMockModel.new(name: "Joe", position: :employee, vacation_days: 14)
-
-        user.name.should.equal "Joe"
-        user.position.should.equal :employee
-        user.vacation_days.should.equal 14
-      end
-
-      # Implementation deatail...
-      Peacekeeper::Model.instance_variable_set(:@subclasses, [])
+      SubclassBeforeModel.config[:path].should.equal path
+      SubclassAfterModel.config[:path].should.equal path
     end
   end
 
   describe 'used to create a model subclass with Sequel' do
     # Repeat config here in case these tests are run alone
-    Peacekeeper::Model.config[:path] = SEQUEL_TEST_DB
+    Peacekeeper::Model.config[:protocol] = 'jdbc:sqlite::memory:'
     Peacekeeper::Model.data_source = :sequel
 
     class MyTestModel < Peacekeeper::Model
@@ -172,13 +48,12 @@ describe Peacekeeper::Model do
 
     # Setup the DB and populate with some test data
     DB = Sequel::Model.db
-    DB.drop_table(*DB.tables)
     DB.create_table :my_tests do
       primary_key :id
       foreign_key :other_id, :my_tests
       String :name
     end
-    DB[:my_tests].insert(id: 1, other_id: nil, name: 'A Test')
+    DB[:my_tests].insert(id: 1, name: 'A Test')
     DB[:my_tests].insert(id: 2, other_id: 1, name: 'Other')
     DB[:my_tests].filter(id: 1).update(other_id: 2)
 
@@ -245,7 +120,6 @@ describe Peacekeeper::Model do
       my_test_model.should.be.kind_of MyTestModel
       MyTestModel.filter(name: 'Another Test').first.should.equal my_test_model
     end
-
     it 'should prevent calling :to_json inherited from Object' do
       class Object
         def to_json
