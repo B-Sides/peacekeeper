@@ -112,3 +112,8 @@ describe 'CarModel' do
 end
 ```
 
+# License
+
+Copyright (C) 2012-2013 Burnside Digital
+
+Licensed under the BSD 2-Clause License. See COPYING for license details.
